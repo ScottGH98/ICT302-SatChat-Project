@@ -1,2 +1,2 @@
 int main(void);
-void setup(void);
+static void setup(void);
