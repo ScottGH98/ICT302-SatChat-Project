@@ -1,6 +1,7 @@
 #include <Adafruit_SPITFT.h>
 #include <Adafruit_SPITFT_Macros.h>
 #include <gfxfont.h>
+#include <EEPROM.h>
 
 #include <Adafruit_GFX.h>    // Core graphics library
 #include <SPI.h>
@@ -32,11 +33,73 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 #define TFT_DC 49
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 
+struct DateTime
+{
+  short hour;
+  short minute;
+  short second;
+  short day;
+  short month;
+  short year; 
+};
+
+struct GPS
+{
+  double longitutde;
+  double latitude;
+  struct DateTime;
+};
+
+struct Message
+{
+  char sender[20];
+  char recipient[20];
+  char content[200];
+  struct GPS coords; 
+};
+
+struct Settings
+{
+  char predefinedMessages[4][200];
+  bool breadcrumbs;
+  short breadInterval;
+  bool militaryTime;
+};
+
+struct Eeprom
+{
+  struct Message inbox[8];
+  struct Message outbox[4];
+  struct Settings settings; 
+}eeprom;
+
+void SetupEeprom(void)
+{
+  strcpy(eeprom.settings.predefinedMessages[0], "All is going well.");
+  strcpy(eeprom.settings.predefinedMessages[1], "Setting up camp.");
+  strcpy(eeprom.settings.predefinedMessages[2], "Going for a hike.");
+  strcpy(eeprom.settings.predefinedMessages[3], "Injured, need help.");
+
+  eeprom.settings.breadcrumbs = true;
+  eeprom.settings.breadInterval = 10;
+  eeprom.settings.militaryTime = false;
+  EEPROM.put(0,eeprom);
+}
+
 void setup(void) { 
   Serial.begin(9600);
   
   tft.begin();
   tft.setRotation(3);
+
+  
+  //only run once ever to setup initial defaults on the eeprom
+  //comment out after first run
+  SetupEeprom(); 
+
+  EEPROM.get(0,eeprom);
+  
+    
   MainMenu();
 }
 
