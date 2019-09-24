@@ -75,7 +75,7 @@ struct Eeprom
 
 void SetupEeprom(void)
 {
-  strcpy(eeprom.settings.predefinedMessages[0], "All if going well.");
+  strcpy(eeprom.settings.predefinedMessages[0], "All is going well.");
   strcpy(eeprom.settings.predefinedMessages[1], "Setting up camp.");
   strcpy(eeprom.settings.predefinedMessages[2], "Going for a hike.");
   strcpy(eeprom.settings.predefinedMessages[3], "Injured, need help.");
