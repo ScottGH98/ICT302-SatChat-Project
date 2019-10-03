@@ -75,6 +75,8 @@ struct Eeprom
   struct Settings settings; 
 }eeprom;
 
+byte factorySettings;
+
 void setup(void) { 
   Serial.begin(9600,SERIAL_8N1);
   Serial2.begin(9600,SERIAL_8N1);
@@ -91,7 +93,13 @@ void setup(void) {
   rtc.update();
   rtc.enableAlarmInterrupt();
   rtc.setAlarm1(0);
-  //SetupEeprom();
+
+
+  EEPROM.get(0,eeprom);
+  factorySettings = EEPROM.read(0); //the MEGA default for EEPROM is 255; if we have set up the device before it will not be 255
+  if(factorySettings == 255){ //this is a new device; conduct first time set up
+    SetupEeprom();
+  }
   
   //Build the main menu
   mainMenu();
@@ -167,23 +175,43 @@ void loop()
         }
     }
         
-  }else if(mode == 4) {
+  }else if(mode == 4) { //this is settings
     
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
-      if(touchPoint[0] > 160 && touchPoint[1] > 145){
-          //function
-        } else if(touchPoint[0] < 160 && touchPoint[1] > 145){
-          //function
-        }else if(touchPoint[0] > 160 && touchPoint[1] > 50){
-          //function
-        }else if(touchPoint[0] < 160 && touchPoint[1] > 50){
-          //function
+      if(touchPoint[1] > 60 && touchPoint[1] < 110){
+          if(eeprom.settings.breadcrumbs == true){
+            eeprom.settings.breadcrumbs = false;
+          } else if (eeprom.settings.breadcrumbs == false){
+            eeprom.settings.breadcrumbs = true;
+          }
+          settings();
+        }else if(touchPoint[1] > 110 && touchPoint[1] < 160){
+          if(eeprom.settings.militaryTime == true){
+            eeprom.settings.militaryTime = false;
+          } else if (eeprom.settings.militaryTime == false){
+            eeprom.settings.militaryTime = true;
+          }
+          settings();
+        }else if(touchPoint[1] > 165 && touchPoint[1] < 185){
+          //set text function
+          settings(); //refresh the screen
+        }else if(touchPoint[1] > 190 && touchPoint[1] < 230){
+          
+          if(touchPoint[0] > 240 && eeprom.settings.breadInterval < 15){
+            eeprom.settings.breadInterval = eeprom.settings.breadInterval + 1;
+          }else if (touchPoint[0] < 70 && eeprom.settings.breadInterval > 0){
+            eeprom.settings.breadInterval = eeprom.settings.breadInterval - 1;
+          }
+          settings(); //refresh the screen
         }else if(touchPoint[0] < 50 && touchPoint[1] < 50){
+          //before going to menu, we write everything back into eeprom for next time
+          EEPROM.put(0,eeprom);
           mainMenu();
         }
+        
     }
         
-  }
+  }//we probably need another screen for the custom texts
   
   rtc.update();
   #ifdef INTERRUPT_PIN
@@ -238,7 +266,49 @@ void settings(){
   mode = 4;
   tft.fillScreen(ILI9341_BLACK);
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
-  tft.fillRect(0, 0, 50, 50, ILI9341_BLACK);
+  tft.fillRect(0, 0, 50, 50, ILI9341_BLACK); //(x,y,xwidth,yheight)
+  tft.fillRect(0,50,320,240, ILI9341_CYAN);
+  tft.fillRect(5,55,310,40, ILI9341_BLACK);
+  
+  //checkbox for breadcrumbs
+  tft.setCursor(10,60);
+  tft.setTextColor(ILI9341_WHITE);  tft.setTextSize(3);
+  tft.println("Breadcrumbs");
+  tft.fillRect(280,60,30,30,ILI9341_CYAN);
+  if(eeprom.settings.breadcrumbs == true){
+    tft.fillRect(285,65,20,20,ILI9341_BLACK);
+  }
+
+  //checkbox for 24 hour time
+  tft.fillRect(5,100,310,40, ILI9341_BLACK);
+  tft.setCursor(10,105);
+  tft.setTextColor(ILI9341_WHITE);  tft.setTextSize(3);
+  tft.println("24 Hour Clock");
+  tft.fillRect(280,105,30,30,ILI9341_CYAN);
+  if(eeprom.settings.militaryTime == true){
+    tft.fillRect(285,110,20,20,ILI9341_BLACK);
+  }
+  //text editor
+  tft.fillRect(5,145,310,40, ILI9341_BLACK);
+  tft.setCursor(10,150);
+  tft.setTextColor(ILI9341_WHITE);  tft.setTextSize(3);
+  tft.println("Set texts");
+  tft.setCursor(250,150);
+  tft.println(factorySettings);
+
+  //time editor
+  tft.fillRect(5,190,310,40, ILI9341_BLACK);
+  tft.setCursor(50,195);
+  tft.setTextColor(ILI9341_WHITE);  tft.setTextSize(3);
+  tft.println("Interval: ");
+  tft.setCursor(230,195);
+  tft.println(eeprom.settings.breadInterval);
+  tft.fillRect(10,195,30,30,ILI9341_CYAN);
+  tft.fillTriangle(15,210,30,200,30,220, ILI9341_BLACK);
+  tft.fillRect(280,195,30,30,ILI9341_CYAN);
+  tft.fillTriangle(305,210,290,200,290,220, ILI9341_BLACK);
+
+  //update time
   drawTime();
 }
 
