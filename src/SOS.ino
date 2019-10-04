@@ -78,8 +78,19 @@ struct Eeprom
 byte factorySettings;
 
 void setup(void) { 
+  
   Serial.begin(9600,SERIAL_8N1);
+  Serial.println("Device initiallised");
   Serial2.begin(9600,SERIAL_8N1);
+  Serial3.begin(9600); //EMIC serial
+
+  Serial3.print("\nX\nS"); //End command (just in case),Stop speaking, prepare to speak. Do not end command until message has been sent;
+  Serial3.println("Powered up."); //"SPowered up\n" is the entire command and terminates by itself. "S\nPowered up" will not work. 
+
+  //set up the emic
+  //Serial3.println("N0"); //set voice; N0 to N8
+  //Serial3.println("V18"); //set volume; V-48 to V18
+  //Serial3.println("W75"); //set words per minute. W75 to W600
   
   tft.begin();
   tft.setRotation(3);
@@ -94,6 +105,7 @@ void setup(void) {
   rtc.enableAlarmInterrupt();
   rtc.setAlarm1(0);
 
+  
 
   EEPROM.get(0,eeprom);
   factorySettings = EEPROM.read(0); //the MEGA default for EEPROM is 255; if we have set up the device before it will not be 255
@@ -196,7 +208,6 @@ void loop()
           //set text function
           settings(); //refresh the screen
         }else if(touchPoint[1] > 190 && touchPoint[1] < 230){
-          
           if(touchPoint[0] > 240 && eeprom.settings.breadInterval < 15){
             eeprom.settings.breadInterval = eeprom.settings.breadInterval + 1;
           }else if (touchPoint[0] < 70 && eeprom.settings.breadInterval > 0){
@@ -236,6 +247,8 @@ void loop()
 
 void presetMessages(){
   mode = 1;
+  Serial3.print("\nX\nS");
+  Serial3.println("View preset messages.");
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   tft.fillRect(0, 0, 50, 50, ILI9341_BLACK);
   tft.fillRect(0, 50, 160, 135, ILI9341_RED);
@@ -247,6 +260,8 @@ void presetMessages(){
 
 void customMessages(){
   mode = 2;
+  Serial3.print("\nX\nS");
+  Serial3.println("Send custom messages.");
   tft.fillScreen(ILI9341_BLACK);
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   tft.fillRect(0, 0, 50, 50, ILI9341_BLACK);
@@ -255,6 +270,8 @@ void customMessages(){
 
 void coordinates(){
   mode = 3;
+  Serial3.print("\nX\nS");
+  Serial3.println("Viewing coordinated.");
   tft.fillScreen(ILI9341_BLACK);
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   tft.fillRect(0, 0, 50, 50, ILI9341_BLACK);
@@ -264,6 +281,8 @@ void coordinates(){
 
 void settings(){
   mode = 4;
+  Serial3.print("\nX\nS");
+  Serial3.println("Settings menu.");
   tft.fillScreen(ILI9341_BLACK);
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   tft.fillRect(0, 0, 50, 50, ILI9341_BLACK); //(x,y,xwidth,yheight)
@@ -293,8 +312,6 @@ void settings(){
   tft.setCursor(10,150);
   tft.setTextColor(ILI9341_WHITE);  tft.setTextSize(3);
   tft.println("Set texts");
-  tft.setCursor(250,150);
-  tft.println(factorySettings);
 
   //time editor
   tft.fillRect(5,190,310,40, ILI9341_BLACK);
@@ -313,12 +330,16 @@ void settings(){
 }
 
 void SOS(){
+  Serial3.print("X\nS");
+  Serial3.println("Emergency protocal activated.");
   tft.fillScreen(ILI9341_BLACK);
   mode = 5;
 }
 
 void mainMenu(){
   mode = 0;
+  Serial3.print("X\nS");
+  Serial3.println("Main menu.");
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   tft.fillRect(0, 50, 160, 135, ILI9341_RED);
   tft.fillRect(160, 50, 240, 135, ILI9341_YELLOW);
