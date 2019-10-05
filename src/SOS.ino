@@ -8,6 +8,9 @@
 #include <Adafruit_ILI9341.h>
 #include "TouchScreen.h"
 #include <EEPROM.h>
+#include <Adafruit_LSM303_U.h>
+#include <Adafruit_Sensor.h>
+
 
 // These are the four touchscreen analog pins
 #define YP A2  // must be an analog pin, use "An" notation!
@@ -38,6 +41,10 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 long int touchPoint[2];
 int mode = 0;
+
+//Set up the LSM303
+Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(12345);
+Adafruit_LSM303_Accel_Unified accel = Adafruit_LSM303_Accel_Unified(22345); //the number here is random, but needs to be unique as it is an ID number
 
 struct DateTime
 {
@@ -91,19 +98,25 @@ void setup(void) {
   //Serial3.println("N0"); //set voice; N0 to N8
   //Serial3.println("V18"); //set volume; V-48 to V18
   //Serial3.println("W75"); //set words per minute. W75 to W600
-  
+
+  //turn on screen
   tft.begin();
   tft.setRotation(3);
   tft.fillScreen(ILI9341_BLACK);
+
+  //turn on compas
+  mag.begin();
+  accel.begin();
 
   #ifdef INTERRUPT_PIN // If using the SQW pin as an interrupt
     pinMode(INTERRUPT_PIN, INPUT_PULLUP);
   #endif
   rtc.begin(DS13074_CS_PIN);
-  //rtc.setTime(0, 40, 2, 5, 26, 9, 19);
   rtc.update();
   rtc.enableAlarmInterrupt();
   rtc.setAlarm1(0);
+  //rtc.setTime(0, 40, 2, 5, 26, 9, 19);
+  
 
   
 
@@ -120,15 +133,17 @@ void setup(void) {
 
 void loop()
 {
+  printAccel();
+  //delay(3500);
   // Retrieve a point
   TSPoint p = ts.getPoint();
   // Scale from ~0->1000 to tft.width using the calibration #'s
   touchPoint[0] = map(p.y, TS_MAXY, TS_MINY, 0, tft.width());
   touchPoint[1] = map(p.x, TS_MINX, TS_MAXX, 0, tft.height());
-
+ 
   if(mode == 0) {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
-      if(touchPoint[0] > 160 && touchPoint[1] > 145){
+      if(touchPoint[0] > 160 && touchPoint[1] > 145){ //cyan
         settings();
       } else if(touchPoint[0] < 160 && touchPoint[1] > 145){
         coordinates();
@@ -172,8 +187,18 @@ void loop()
     }
         
   }else if(mode == 3) {
-    
-    if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
+
+    float xAccel = accelX();
+    float yAccel = accelY();
+    if(ceil(xAccel)>1){
+      tft.fillRect(0,50,360,210,ILI9341_GREEN);
+    } else if(ceil(xAccel)<1){
+      tft.fillRect(0,50,360,210,ILI9341_RED);
+    }
+    if(touchPoint[0]<50&&touchPoint[1]<50){
+      mainMenu();
+    }
+    /*if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] > 160 && touchPoint[1] > 145){
           //function
         } else if(touchPoint[0] < 160 && touchPoint[1] > 145){
@@ -185,7 +210,7 @@ void loop()
         }else if(touchPoint[0] < 50 && touchPoint[1] < 50){
           mainMenu();
         }
-    }
+    }*/
         
   }else if(mode == 4) { //this is settings
     
@@ -225,6 +250,8 @@ void loop()
   }//we probably need another screen for the custom texts
   
   rtc.update();
+  
+  
   #ifdef INTERRUPT_PIN
     // Interrupt pin is active-low, if it's low, an alarm is triggered
     if (!digitalRead(INTERRUPT_PIN))
@@ -271,7 +298,7 @@ void customMessages(){
 void coordinates(){
   mode = 3;
   Serial3.print("\nX\nS");
-  Serial3.println("Viewing coordinated.");
+  Serial3.println("Viewing coordinates.");
   tft.fillScreen(ILI9341_BLACK);
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   tft.fillRect(0, 0, 50, 50, ILI9341_BLACK);
@@ -346,6 +373,7 @@ void mainMenu(){
   tft.fillRect(0, 145, 160, 240, ILI9341_GREEN);
   tft.fillRect(160, 145, 320, 240, ILI9341_CYAN);
   drawTime();
+  drawBearing();
 }
 
 
@@ -372,4 +400,46 @@ void drawTime() {
   if(rtc.minute() < 10) 
     tft.print("0");
   tft.print(rtc.minute());
+}
+
+void drawBearing(){ //all this code is shamelessly stolen
+  sensors_event_t event; 
+  mag.getEvent(&event);
+      
+  float Pi = 3.14159;
+      
+  // Calculate the angle of the vector y,x
+  float heading = (atan2(event.magnetic.y,event.magnetic.x) * 180) / Pi;
+      
+  // Normalize to 0-360
+  if (heading < 0)
+  {
+    heading = 360 + heading;
+  }
+  tft.setCursor(55,10);
+  tft.setTextSize(2);
+  tft.println("Bearing:");
+  tft.setCursor(55,30);
+  tft.println(heading);
+}
+
+void printAccel(){
+  sensors_event_t event;
+  accel.getEvent(&event);
+
+  Serial.println("Acceleration x, y, z: "); //x seems to be whether I tilt left or right, y seems to be tilt forward or back, and z seems to be how fast I drop the device
+  Serial.print(event.acceleration.x);Serial.print(" ");Serial.print(event.acceleration.y);Serial.print(" ");Serial.print(event.acceleration.z);Serial.print("\n");
+  //roll, pitch, and heading are exactly the same as x, y, z respectively 
+  //Serial.println(event.acceleration.roll);Serial.println(event.acceleration.pitch);Serial.println(event.acceleration.heading);
+}
+float accelX(){
+  sensors_event_t event;
+  accel.getEvent(&event);
+  Serial.println(ceil(event.acceleration.x));
+  return event.acceleration.x;
+}
+float accelY(){
+  sensors_event_t event;
+  accel.getEvent(&event);
+  return event.acceleration.y;
 }
