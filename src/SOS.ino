@@ -132,16 +132,16 @@ void setup(void) {
 void loop()
 {
   printAccel();
-  //delay(3500); //This delays the entire program too long, but is good for testing the accelerometer
+  //delay(3500);
   // Retrieve a point
   TSPoint p = ts.getPoint();
   // Scale from ~0->1000 to tft.width using the calibration #'s
   touchPoint[0] = map(p.y, TS_MAXY, TS_MINY, 0, tft.width());
   touchPoint[1] = map(p.x, TS_MINX, TS_MAXX, 0, tft.height());
-
+ 
   if(mode == 0) {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
-      if(touchPoint[0] > 160 && touchPoint[1] > 145){
+      if(touchPoint[0] > 160 && touchPoint[1] > 145){ //cyan
         settings();
       } else if(touchPoint[0] < 160 && touchPoint[1] > 145){
         coordinates();
@@ -185,8 +185,18 @@ void loop()
     }
         
   }else if(mode == 3) {
-    
-    if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
+
+    float xAccel = accelX();
+    float yAccel = accelY();
+    if(ceil(xAccel)>1){
+      tft.fillRect(0,50,360,210,ILI9341_GREEN);
+    } else if(ceil(xAccel)<1){
+      tft.fillRect(0,50,360,210,ILI9341_RED);
+    }
+    if(touchPoint[0]<50&&touchPoint[1]<50){
+      mainMenu();
+    }
+    /*if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] > 160 && touchPoint[1] > 145){
           //function
         } else if(touchPoint[0] < 160 && touchPoint[1] > 145){
@@ -198,7 +208,7 @@ void loop()
         }else if(touchPoint[0] < 50 && touchPoint[1] < 50){
           mainMenu();
         }
-    }
+    }*/
         
   }else if(mode == 4) { //this is settings
     
@@ -286,7 +296,7 @@ void customMessages(){
 void coordinates(){
   mode = 3;
   Serial3.print("\nX\nS");
-  Serial3.println("Viewing coordinated.");
+  Serial3.println("Viewing coordinates.");
   tft.fillScreen(ILI9341_BLACK);
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   tft.fillRect(0, 0, 50, 50, ILI9341_BLACK);
@@ -419,4 +429,15 @@ void printAccel(){
   Serial.print(event.acceleration.x);Serial.print(" ");Serial.print(event.acceleration.y);Serial.print(" ");Serial.print(event.acceleration.z);Serial.print("\n");
   //roll, pitch, and heading are exactly the same as x, y, z respectively 
   //Serial.println(event.acceleration.roll);Serial.println(event.acceleration.pitch);Serial.println(event.acceleration.heading);
+}
+float accelX(){
+  sensors_event_t event;
+  accel.getEvent(&event);
+  Serial.println(ceil(event.acceleration.x));
+  return event.acceleration.x;
+}
+float accelY(){
+  sensors_event_t event;
+  accel.getEvent(&event);
+  return event.acceleration.y;
 }
