@@ -132,7 +132,7 @@ void setup(void) {
 void loop()
 {
   printAccel();
-  delay(3500);
+  //delay(3500); //This delays the entire program too long, but is good for testing the accelerometer
   // Retrieve a point
   TSPoint p = ts.getPoint();
   // Scale from ~0->1000 to tft.width using the calibration #'s
