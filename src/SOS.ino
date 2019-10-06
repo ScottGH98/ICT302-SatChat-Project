@@ -1,4 +1,4 @@
-#include <SparkFunDS3234RTC.h>
+#include <SparkFunDS3234RTC.h>//I use a different library because I have a different chip
 #include <Adafruit_GPS.h>
 #include <Adafruit_SPITFT.h>
 #include <Adafruit_SPITFT_Macros.h>
@@ -389,18 +389,7 @@ void SetupEeprom()
   EEPROM.put(0,eeprom);
 }
 
-void drawTime() {
-  rtc.update();
-  tft.fillRect(200, 0, 320, 50, ILI9341_WHITE);
-  tft.setCursor(200, 10);
-  tft.setTextColor(0x0000);
-  tft.setTextSize(4);
-  tft.print(rtc.hour());
-  tft.print(":");
-  if(rtc.minute() < 10) 
-    tft.print("0");
-  tft.print(rtc.minute());
-}
+
 
 void drawBearing(){ //all this code is shamelessly stolen
   sensors_event_t event; 
@@ -442,4 +431,21 @@ float accelY(){
   sensors_event_t event;
   accel.getEvent(&event);
   return event.acceleration.y;
+}
+
+
+
+//the program forks here
+
+void drawTime() {
+  rtc.update();
+  tft.fillRect(200, 0, 320, 50, ILI9341_WHITE);
+  tft.setCursor(200, 10);
+  tft.setTextColor(0x0000);
+  tft.setTextSize(4);
+  tft.print(rtc.hour());
+  tft.print(":");
+  if(rtc.minute() < 10) 
+    tft.print("0");
+  tft.print(rtc.minute());
 }
