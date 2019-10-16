@@ -13,4 +13,7 @@ static touch_button_function tb_set_menu;
 static touch_button_function tb_key;
 static touch_button_function tb_key_shift;
 static touch_button_function tb_key_caps;
+static touch_button_function tb_key_enter;
+static touch_button_function tb_key_backspace;
 static void draw_time(void);
+static void draw_keyboard_legends(void);

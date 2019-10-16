@@ -33,7 +33,7 @@ static bool process_touch_buttons(const enum menu menu)
 	bool buttonInteraction = false;
 	if(!(tp.justPressed) && deviceState.settings.instantButtons) return buttonInteraction;//RETURN FALSE IF THE SCREEN WAS NOT JUST PRESSED AND INSTANT BUTTONS IS DISABLED.
 	
-	struct menu_buttons mb = menuButtons[menu];
+	struct menu_buttons *mb = menuButtons[menu];
 	
 	if(!(deviceState.settings.instantButtons))
 	{
@@ -199,6 +199,7 @@ static void process_menu_keyboard(void)
 		
 		tft.fillScreen(0x0000);
 		draw_menu_buttons(MENU_KEYBOARD);
+		draw_keyboard_legends();
 		
 		if(deviceState.settings.voicedMenus)
 		{
@@ -240,6 +241,10 @@ static void tb_key(const uintptr_t functionData)
 			break;
 		}
 	}
+	if(deviceState.settings.voicedKeys)
+	{
+		say((char*) functionData);//THIS CODE LOOKS RISKY.
+	}
 }
 
 static void tb_key_shift(const uintptr_t functionData)
@@ -263,6 +268,30 @@ static void tb_key_caps(const uintptr_t functionData)
 	else
 	{
 		deviceState.message.caps = true;
+	}
+}
+
+static void tb_key_enter(const uintptr_t functionData)
+{
+	for(uint_fast8_t i = 0; i < MESSAGE_LENGTH; ++i)
+	{
+		if(deviceState.message.text[i] == '\0')
+		{
+			deviceState.message.text[i] = '\n';
+			break;
+		}
+	}
+}
+
+static void tb_key_backspace(const uintptr_t functionData)
+{
+	for(uint_fast8_t i = 1; i < MESSAGE_LENGTH; ++i)
+	{
+		if(deviceState.message.text[i] == '\0')
+		{
+			deviceState.message.text[i - 1] = '\0';
+			break;
+		}
 	}
 }
 
@@ -346,5 +375,33 @@ inline static void shift_key(const char c)
 		default:
 			c = toupper(c);
 			break;
+	}
+}
+
+static void draw_keyboard_legends(void)
+{
+	tft.setTextSize(3);
+	tft.setTextColor(0x0000);
+	
+	struct menu_buttons *mb = menuButtons[MENU_KEYBOARD];
+	
+	for(uint_fast8_t i = 0; i < mb->buttonCount; ++i)
+	{
+		if(mb->button[i].function == tb_key)
+		{
+			char legend[2] = {mb->button[i].functionData};
+			if(deviceState.message.shift)
+			{
+				legend[0] = shift_key(legend[0]);
+				if(deviceState.message.caps) legend[0] = tolower(legend[0]);
+			}
+			else
+			{
+				if(deviceState.message.caps) legend[0] = toupper(legend[0]);
+			}
+			
+			tft.setCursor(mb->button[i].x + 0000, mb->button[i].y + 0000);//CHANGE OFFSETS TO ALIGN LEGEND.
+			tft.print(legend);
+		}
 	}
 }

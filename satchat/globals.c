@@ -34,7 +34,7 @@ const struct touch_button menuKeyboardButtons[] =
 	{204, 137, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, 'i'},
 	{230, 137, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, 'o'},
 	{256, 137, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, 'p'},
-	{282, 137, 38, 25, PASTEL_YELLOW, NES_RED, tb_key, '\0'},//BACKSPACE
+	{282, 137, 38, 25, PASTEL_YELLOW, NES_RED, tb_key_backspace, NULL},//BACKSPACE
 	{1, 163, 32, 25, PASTEL_YELLOW, NES_RED, tb_key_caps, NULL},//CAPS
 	{35, 163, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, 'a'},
 	{61, 163, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, 's'},
@@ -45,7 +45,7 @@ const struct touch_button menuKeyboardButtons[] =
 	{191, 163, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, 'j'},
 	{217, 163, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, 'k'},
 	{243, 163, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, 'l'},
-	{269, 163, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '\n'},//ENTER
+	{269, 163, 25, 25, PASTEL_YELLOW, NES_RED, tb_key_enter, NULL},//ENTER
 	{22, 189, 25, 25, PASTEL_YELLOW, NES_RED, tb_key_shift, NULL},//SHIFT
 	{48, 189, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, 'z'},
 	{74, 189, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, 'x'},
@@ -58,7 +58,7 @@ const struct touch_button menuKeyboardButtons[] =
 	{256, 189, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '.'},
 	{282, 189, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '/'},
 	{35, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, ';'},
-	{61, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '\''},
+	{61, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '\"'},
 	{87, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '`'},
 	{113, 215, 129, 25, PASTEL_YELLOW, NES_RED, tb_key, ' '},//SPACE
 	{243, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '['},

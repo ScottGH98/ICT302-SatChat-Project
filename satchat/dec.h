@@ -14,6 +14,7 @@ struct settings
 	bool breadcrumbs;
 	bool militaryTime;
 	bool voicedMenus;
+	bool voicedKeys;
 	bool instantButtons;
 };
 
