@@ -58,7 +58,7 @@ const struct touch_button menuKeyboardButtons[] =
 	{256, 189, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '.'},
 	{282, 189, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '/'},
 	{35, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, ';'},
-	{61, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '\"'},
+	{61, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '\''},
 	{87, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '`'},
 	{113, 215, 129, 25, PASTEL_YELLOW, NES_RED, tb_key, ' '},//SPACE
 	{243, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '['},
