@@ -1,0 +1,3 @@
+#define MENU_TEXT_SIZE 3
+#define MENU_TEXT_WIDTH 8
+#define MENU_TEXT_HEIGHT 11
