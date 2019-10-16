@@ -1,6 +1,6 @@
 typedef void (touch_button_function)(const uintptr_t functionData);
 
-enum menu {MENU_NONE, MENU_MAIN, MENU_SETTINGS, MENU_COORDINATES, MENU_COUNT};//MENU_COUNT MUST BE LAST.
+enum menu {MENU_NONE, MENU_MAIN, MENU_SETTINGS, MENU_COORDINATES, MENU_KEYBOARD, MENU_COUNT};//MENU_COUNT MUST BE LAST.
 
 struct menu_context
 {
@@ -19,6 +19,7 @@ struct settings
 
 struct eeprom//USED FOR FINDING OFFSETS AND DOCUMENTING EEPROM LAYOUT. DO NOT CREATE INSTANCE OF THIS STRUCT.
 {
+	uint32_t header;
 	struct settings;
 	struct message inbox[8];
 	struct message outbox[4];
@@ -63,9 +64,41 @@ struct touch_point
 	bool justReleased;
 };
 
+struct date_time
+{
+	uint16_t year;
+	uint8_t month;
+	uint8_t day;
+	uint8_t hour;
+	uint8_t minute;
+	uint8_t second;
+};
+
+struct gps
+{
+	double longitude;
+	double latitude;
+	struct date_time timestamp;
+};
+
+struct message
+{
+	char number[16];
+	struct gps gps;
+	char text[MESSAGE_LENGTH];
+};
+
+struct message_editor
+{
+	char text[MESSAGE_LENGTH];
+	bool shift;
+	bool caps;
+};
+
 struct device_state
 {
 	struct settings settings;
 	struct menu_context menuContext;
 	struct touch_point lastTouchPoint;
+	struct message_editor message;
 };
