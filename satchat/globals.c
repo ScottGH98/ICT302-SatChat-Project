@@ -3,7 +3,7 @@ struct device_state deviceState;
 const struct touch_button menuMainButtons[] =
 {
 	{0, 53, 159, 93, PASTEL_GREEN, NES_RED, tb_set_menu, MENU_MESSAGES},
-	{162, 53, 159, 93, PASTEL_RED, NES_RED, tb_set_menu, MENU_MESSAGES},
+	{162, 53, 159, 93, PASTEL_RED, NES_RED, tb_set_menu, MENU_KEYBOARD},//TEMPORARY MENU ASSIGNMENT FOR TESTING
 	{0, 148, 159, 93, PASTEL_BLUE, NES_RED, tb_set_menu, MENU_COORDINATES},
 	{162, 148, 159, 93, PASTEL_YELLOW, NES_RED, tb_set_menu, MENU_SETTINGS}
 };
@@ -11,6 +11,7 @@ bool menuMainButtonStates[sizeof(menuMainButtons) / sizeof(struct touch_button)]
 
 const struct touch_button menuKeyboardButtons[] =
 {
+	{0, 0, 106, 51, ILI9341_WHITE, NES_RED, tb_set_menu, MENU_MAIN},//TEMPORARY MENU ASSIGNMENT FOR TESTING
 	{9, 111, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '1'},
 	{35, 111, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '2'},
 	{61, 111, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '3'},
@@ -56,16 +57,21 @@ const struct touch_button menuKeyboardButtons[] =
 	{230, 189, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, ','},
 	{256, 189, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '.'},
 	{282, 189, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '/'},
-	{61, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, ';'},
-	{87, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '\''},
+	{35, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, ';'},
+	{61, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '\''},
+	{87, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '`'},
 	{113, 215, 129, 25, PASTEL_YELLOW, NES_RED, tb_key, ' '},//SPACE
 	{243, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '['},
 	{269, 215, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, ']'}
 };
-bool menuKeyboardButtonStates[sizeof(menuKB01Buttons) / sizeof(struct touch_button)];
+bool menuKeyboardButtonStates[sizeof(menuKeyboardButtons) / sizeof(struct touch_button)];
 
-struct menu_buttons menuButtons[MENU_COUNT] =
+const struct menu_buttons menuButtons[MENU_COUNT] =
 {
-	{NULL, 0, 0},
-	{menuMainButtons, menuMainButtonStates, sizeof(menuMainButtons) / sizeof(struct touch_button)};
+	{NULL, NULL, 0},//MENU_NONE
+	{menuMainButtons, menuMainButtonStates, sizeof(menuMainButtons) / sizeof(struct touch_button)};//MENU_MAIN
+	{NULL, NULL, 0},//MENU_SETTINGS
+	{NULL, NULL, 0},//MENU_COORDINATES
+	{NULL, NULL, 0},//MENU_MESSAGES
+	{menuKeyboardButtons, menuKeyboardButtonStates, sizeof(menuKeyboardButtons) / sizeof(struct touch_button)},//MENU_KEYBOARD
 };

@@ -1,6 +1,6 @@
 typedef void (touch_button_function)(const uintptr_t functionData);
 
-enum menu {MENU_NONE, MENU_MAIN, MENU_SETTINGS, MENU_COORDINATES, MENU_KEYBOARD, MENU_COUNT};//MENU_COUNT MUST BE LAST.
+enum menu {MENU_NONE, MENU_MAIN, MENU_SETTINGS, MENU_COORDINATES, MENU_MESSAGES, MENU_KEYBOARD, MENU_COUNT};//MENU_COUNT MUST BE LAST.
 
 struct menu_context
 {
