@@ -33,23 +33,23 @@ static bool process_touch_buttons(const enum menu menu)
 	bool buttonInteraction = false;
 	if(!(tp.justPressed) && deviceState.settings.instantButtons) return buttonInteraction;//RETURN FALSE IF THE SCREEN WAS NOT JUST PRESSED AND INSTANT BUTTONS IS DISABLED.
 	
-	struct menu_buttons *mb = menuButtons[menu];
+	struct menu_buttons mb = menuButtons[menu];
 	
 	if(!(deviceState.settings.instantButtons))
 	{
 		for(uint_fast8_t i = 0; i < mb.buttonCount; ++i)
 		{
-			if(mb->buttonState[i])//IF THE BUTTON IS IN THE PRESSED STATE.
+			if(mb.buttonState[i])//IF THE BUTTON IS IN THE PRESSED STATE.
 			{
-				if(point2aabb(tp.x, tp.y, mb->button[i].x, mb->button[i].y, mb->button[i].w, mb->button[i].h))
+				if(point2aabb(tp.x, tp.y, mb.button[i].x, mb.button[i].y, mb.button[i].w, mb.button[i].h))
 				{
 					if(tp.justReleased)
 					{
-						if(mb->button[i].function)
+						if(mb.button[i].function)
 						{
-							(*mb->button[i].function)(mb->button[i].functionData);
+							(*mb.button[i].function)(mb.button[i].functionData);
 						}
-						mb->buttonState[i] = false;
+						mb.buttonState[i] = false;
 						buttonInteraction = true;
 					}
 				}
@@ -57,8 +57,8 @@ static bool process_touch_buttons(const enum menu menu)
 				{
 					if(tp.justReleased)
 					{
-						mb->buttonState[i] = false;
-						tft.fillRect(mb->button[i].x, mb->button[i].y, mb->button[i].w, mb->button[i].h, mb->button[i].colour);
+						mb.buttonState[i] = false;
+						tft.fillRect(mb.button[i].x, mb.button[i].y, mb.button[i].w, mb.button[i].h, mb.button[i].colour);
 						buttonInteraction = true;
 					}
 				}
@@ -69,13 +69,13 @@ static bool process_touch_buttons(const enum menu menu)
 	
 	for(uint_fast8_t i = 0; i < mb.buttonCount; ++i)
 	{
-		if(point2aabb(tp.x, tp.y, mb->button[i].x, mb->button[i].y, mb->button[i].w, mb->button[i].h))
+		if(point2aabb(tp.x, tp.y, mb.button[i].x, mb.button[i].y, mb.button[i].w, mb.button[i].h))
 		{
 			if(deviceState.settings.instantButtons)
 			{
-				if(mb->button[i].function)
+				if(mb.button[i].function)
 				{
-					(*mb->button[i].function)(mb->button[i].functionData);
+					(*mb.button[i].function)(mb.button[i].functionData);
 					buttonInteraction = true;
 				}
 			}
@@ -83,8 +83,8 @@ static bool process_touch_buttons(const enum menu menu)
 			{
 				if(tp.justPressed)
 				{
-					mb->buttonState[i] = true;
-					tft.fillRect(mb->button[i].x, mb->button[i].y, mb->button[i].w, mb->button[i].h, mb->button[i].colourPressed);
+					mb.buttonState[i] = true;
+					tft.fillRect(mb.button[i].x, mb.button[i].y, mb.button[i].w, mb.button[i].h, mb.button[i].colourPressed);
 					buttonInteraction = true;
 				}
 			}
@@ -98,7 +98,7 @@ static bool process_touch_buttons(const enum menu menu)
 
 inline static void draw_menu_button(const struct menu_buttons *mb, const uint_fast8_t index)
 {
-	uint16_t colour = (mb->buttonState[index]) ? b.buttonColourPressed : b.buttonColour;
+	uint16_t colour = (mb->buttonState[index]) ? mb->button[index].buttonColourPressed : mb->button[index].buttonColour;
 	tft.fillRect(mb->button[index].x, mb->button[index].y, mb->button[index].w, mb->button[index].y, colour);
 }
 
