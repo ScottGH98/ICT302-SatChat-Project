@@ -203,7 +203,7 @@ static void process_menu_keyboard(void)
 		
 		if(deviceState.settings.voicedMenus)
 		{
-			say("Custom message menu.");
+			say("Keyboard menu.");
 		}
 	}
 	process_touch_buttons(MENU_KEYBOARD);
@@ -252,7 +252,8 @@ static void tb_key(const uintptr_t functionData)
 	}
 	if(deviceState.settings.voicedKeys)
 	{
-		say((char*) functionData);//THIS CODE LOOKS RISKY.
+		char legend[2] = {toupper((char) functionData)};
+		say(legend);
 	}
 }
 
@@ -266,6 +267,10 @@ static void tb_key_shift(const uintptr_t functionData)
 	{
 		deviceState.message.shift = true;
 	}
+	if(deviceState.settings.voicedKeys)
+	{
+		say("Shift.");
+	}
 }
 
 static void tb_key_caps(const uintptr_t functionData)
@@ -277,6 +282,10 @@ static void tb_key_caps(const uintptr_t functionData)
 	else
 	{
 		deviceState.message.caps = true;
+	}
+	if(deviceState.settings.voicedKeys)
+	{
+		say("Capslock.");
 	}
 }
 
@@ -290,6 +299,10 @@ static void tb_key_enter(const uintptr_t functionData)
 			break;
 		}
 	}
+	if(deviceState.settings.voicedKeys)
+	{
+		say("Enter.");
+	}
 }
 
 static void tb_key_backspace(const uintptr_t functionData)
@@ -301,6 +314,10 @@ static void tb_key_backspace(const uintptr_t functionData)
 			deviceState.message.text[i - 1] = '\0';
 			break;
 		}
+	}
+	if(deviceState.settings.voicedKeys)
+	{
+		say("Backspace.");
 	}
 }
 
