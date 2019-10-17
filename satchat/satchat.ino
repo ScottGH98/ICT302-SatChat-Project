@@ -134,6 +134,8 @@ void setup(void) {
   //}
   if(EEPROM.read(offsetof(struct eeprom, header), struct eeprom.header) == 0xFFFFFFFF) SetupEeprom();
   
+  deviceState.settings.instantButtons = false;//Change to true for instant buttons.
+  
   
   //Build the main menu
   mainMenu();

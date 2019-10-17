@@ -13,15 +13,15 @@ const struct touch_button menuMessagesButtons[] =
 {
 	{0, 0, 106, 51, ILI9341_WHITE, NES_RED, tb_set_menu, MENU_MAIN},
 	{0, 53, 159, 93, PASTEL_GREEN, NES_RED, tb_set_menu, MENU_INBOX},
-	{162, 53, 159, 93, PASTEL_RED, NES_RED, tb_set_menu, MENU_PRESET_MESSAGES},//TEMPORARY MENU ASSIGNMENT FOR TESTING
+	{162, 53, 159, 93, PASTEL_RED, NES_RED, tb_set_menu, MENU_PRESET_MESSAGES},
 	{0, 148, 159, 93, PASTEL_BLUE, NES_RED, tb_set_menu, MENU_OUTBOX},
 	{162, 148, 159, 93, PASTEL_YELLOW, NES_RED, tb_set_menu, MENU_KEYBOARD}
 };
-bool menuMainButtonStates[sizeof(menuMessagesButtons) / sizeof(struct touch_button)];
+bool menuMessagesButtonStates[sizeof(menuMessagesButtons) / sizeof(struct touch_button)];
 
 const struct touch_button menuKeyboardButtons[] =
 {
-	{0, 0, 106, 51, ILI9341_WHITE, NES_RED, tb_set_menu, MENU_MAIN},//TEMPORARY MENU ASSIGNMENT FOR TESTING
+	{0, 0, 106, 51, ILI9341_WHITE, NES_RED, tb_set_menu, MENU_MESSAGES},
 	{9, 111, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '1'},
 	{35, 111, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '2'},
 	{61, 111, 25, 25, PASTEL_YELLOW, NES_RED, tb_key, '3'},
@@ -82,6 +82,6 @@ const struct menu_buttons menuButtons[MENU_COUNT] =
 	{menuMainButtons, menuMainButtonStates, sizeof(menuMainButtons) / sizeof(struct touch_button)};//MENU_MAIN
 	{NULL, NULL, 0},//MENU_SETTINGS
 	{NULL, NULL, 0},//MENU_COORDINATES
-	{NULL, NULL, 0},//MENU_MESSAGES
+	{menuMessagesButtons, menuMessagesButtonStates, sizeof(menuMessagesButtons) / sizeof(struct touch_button)},//MENU_MESSAGES
 	{menuKeyboardButtons, menuKeyboardButtonStates, sizeof(menuKeyboardButtons) / sizeof(struct touch_button)},//MENU_KEYBOARD
 };
