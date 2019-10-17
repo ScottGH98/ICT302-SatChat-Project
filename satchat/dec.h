@@ -5,6 +5,7 @@ enum menu {MENU_NONE, MENU_MAIN, MENU_SETTINGS, MENU_COORDINATES, MENU_MESSAGES,
 struct menu_context
 {
 	enum menu menu;
+	enum menu lastMenu;
 	bool justChanged;
 };
 

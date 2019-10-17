@@ -216,7 +216,16 @@ static void tb_null(const uintptr_t functionData)
 
 static void tb_set_menu(const uintptr_t functionData)
 {
+	deviceState.menuContext.menuLast = deviceState.menuContext.menu;
 	deviceState.menuContext.menu = functionData;
+	deviceState.menuContext.justChanged = true;
+}
+
+static void tb_set_menu_last(const uintptr_t functionData)
+{
+	enum menu temp = deviceState.menuContext.menuLast;
+	deviceState.menuContext.menuLast = deviceState.menuContext.menu;
+	deviceState.menuContext.menu = temp;
 	deviceState.menuContext.justChanged = true;
 }
 

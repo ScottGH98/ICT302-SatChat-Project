@@ -10,6 +10,7 @@ static void process_menu_messages(void);
 static void process_menu_coordinates(void);
 static touch_button_function tb_null;
 static touch_button_function tb_set_menu;
+static touch_button_function tb_set_menu_last;
 static touch_button_function tb_key;
 static touch_button_function tb_key_shift;
 static touch_button_function tb_key_caps;

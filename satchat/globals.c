@@ -9,6 +9,16 @@ const struct touch_button menuMainButtons[] =
 };
 bool menuMainButtonStates[sizeof(menuMainButtons) / sizeof(struct touch_button)];
 
+const struct touch_button menuMessagesButtons[] =
+{
+	{0, 0, 106, 51, ILI9341_WHITE, NES_RED, tb_set_menu, MENU_MAIN},
+	{0, 53, 159, 93, PASTEL_GREEN, NES_RED, tb_set_menu, MENU_INBOX},
+	{162, 53, 159, 93, PASTEL_RED, NES_RED, tb_set_menu, MENU_PRESET_MESSAGES},//TEMPORARY MENU ASSIGNMENT FOR TESTING
+	{0, 148, 159, 93, PASTEL_BLUE, NES_RED, tb_set_menu, MENU_OUTBOX},
+	{162, 148, 159, 93, PASTEL_YELLOW, NES_RED, tb_set_menu, MENU_KEYBOARD}
+};
+bool menuMainButtonStates[sizeof(menuMessagesButtons) / sizeof(struct touch_button)];
+
 const struct touch_button menuKeyboardButtons[] =
 {
 	{0, 0, 106, 51, ILI9341_WHITE, NES_RED, tb_set_menu, MENU_MAIN},//TEMPORARY MENU ASSIGNMENT FOR TESTING
