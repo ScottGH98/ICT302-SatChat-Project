@@ -1,6 +1,6 @@
 typedef void (touch_button_function)(const uintptr_t functionData);
 
-enum menu {MENU_NONE, MENU_MAIN, MENU_SETTINGS, MENU_COORDINATES, MENU_MESSAGES, MENU_KEYBOARD, MENU_COUNT};//MENU_COUNT MUST BE LAST.
+enum menu {MENU_NONE, MENU_MAIN, MENU_SETTINGS, MENU_COORDINATES, MENU_MESSAGES, MENU_KEYBOARD, MENU_INBOX, MENU_OUTBOX, MENU_PRESET_MESSAGES, MENU_COUNT};//MENU_COUNT MUST BE LAST.
 
 struct menu_context
 {
@@ -17,6 +17,7 @@ struct settings
 	bool voicedMenus;
 	bool voicedKeys;
 	bool instantButtons;
+	char outgoingNumber[16];
 };
 
 struct eeprom//USED FOR FINDING OFFSETS AND DOCUMENTING EEPROM LAYOUT. DO NOT CREATE INSTANCE OF THIS STRUCT.

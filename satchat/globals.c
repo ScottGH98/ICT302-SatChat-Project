@@ -84,4 +84,7 @@ const struct menu_buttons menuButtons[MENU_COUNT] =
 	{NULL, NULL, 0},//MENU_COORDINATES
 	{menuMessagesButtons, menuMessagesButtonStates, sizeof(menuMessagesButtons) / sizeof(struct touch_button)},//MENU_MESSAGES
 	{menuKeyboardButtons, menuKeyboardButtonStates, sizeof(menuKeyboardButtons) / sizeof(struct touch_button)},//MENU_KEYBOARD
+	{NULL, NULL, 0},//MENU_INBOX
+	{NULL, NULL, 0},//MENU_OUTBOX
+	{NULL, NULL, 0}//MENU_PRESET_MESSAGES
 };
