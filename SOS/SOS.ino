@@ -11,6 +11,7 @@
 #include <Adafruit_LSM303_U.h>
 #include <Adafruit_Sensor.h>
 #include "graphics.h"
+#include <TinyGPS.h>
 
 
 // These are the four touchscreen analog pins
@@ -42,6 +43,11 @@ TouchScreen ts = TouchScreen(XP, YP, XM, YM, 300);
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 long int touchPoint[2];
 int mode = 0;
+TinyGPS gps;
+float lat = 0,lon = 0;
+int gpsYear;
+byte gpsMonth, gpsDay, gpsHour, gpsMinute, gpsSecond, gpsHundredth;
+unsigned long fix_age;
 
 //Set up the LSM303
 Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(12345);
@@ -90,6 +96,7 @@ bool isNumBoard = false;
 bool isLower = true;
 char str[200];
 int preNum = 0;
+int incomingByte;
 
 byte factorySettings;
 
@@ -98,9 +105,9 @@ void setup(void) {
   pinMode(3,INPUT_PULLUP);
   
   Serial.begin(9600,SERIAL_8N1);
-  Serial.println("Device initiallised");
-  Serial1.begin(9600,SERIAL_8N1);
-  Serial2.begin(9600,SERIAL_8N1);
+  Serial.println("Device initiallised"); //Serial Output
+  Serial1.begin(9600,SERIAL_8N1); //TTS Audio
+  Serial2.begin(9600,SERIAL_8N1); //GPS
   Serial3.begin(9600); //EMIC serial
 
   Serial3.print("\nX\nS"); //End command (just in case),Stop speaking, prepare to speak. Do not end command until message has been sent;
@@ -283,8 +290,46 @@ void loop()
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){        
       if(touchPoint[0] < 50 && touchPoint[1] < 50){
         mainMenu();
-      }else if(touchPoint[1] > 50){
-        coordinates();
+      }
+    }
+    else
+    {
+      tft.setTextColor(ILI9341_WHITE);
+      tft.setCursor(130, 55);
+      tft.setTextSize(2);
+      tft.println("Bearing:");
+      tft.setCursor(130, 75);
+      drawBearing();
+      
+      while(Serial2.available()){ // check for gps data 
+        if(gps.encode(Serial2.read()))// encode gps data 
+        {  
+          
+          tft.fillRect(100,75,200,100,ILI9341_BLACK);
+          gps.f_get_position(&lat,&lon);
+          tft.setCursor(110, 100);
+          tft.print("Lat: ");
+          tft.print(lat);
+          tft.setCursor(110, 120);
+          tft.print("Long: ");
+          tft.println(lon);
+          gps.crack_datetime(&gpsYear, &gpsMonth, &gpsDay, &gpsHour, 
+            &gpsMinute, &gpsSecond, &gpsHundredth, &fix_age);
+          tft.setCursor(110, 140);
+          tft.print(gpsDay);
+          tft.print("/");
+          tft.print(gpsMonth);
+          tft.print("/");
+          tft.print(gpsYear);
+          tft.setCursor(110, 160);
+          tft.print(gpsHour);
+          tft.print(":");
+          tft.print(gpsMinute);
+          tft.print(":");
+          tft.print(gpsSecond);
+          tft.print(" UTC");
+          
+        }
       }
     }
         
@@ -294,26 +339,46 @@ void loop()
       if(touchPoint[1] > 60 && touchPoint[1] < 110){
           if(eeprom.settings.breadcrumbs == true){
             eeprom.settings.breadcrumbs = false;
+            EEPROM.put(0,eeprom);
+            tft.fillRect(285,65,20,20,ILI9341_CYAN);
+            delay(300);
           } else if (eeprom.settings.breadcrumbs == false){
             eeprom.settings.breadcrumbs = true;
+            EEPROM.put(0,eeprom);
+            tft.fillRect(285,65,20,20,ILI9341_BLACK);
+            delay(300);
           }
-          settings();
         }else if(touchPoint[1] > 110 && touchPoint[1] < 160){
           if(eeprom.settings.militaryTime == true){
             eeprom.settings.militaryTime = false;
+            EEPROM.put(0,eeprom);
+            drawTime();
+            tft.fillRect(285,110,20,20,ILI9341_CYAN);
+            delay(300);
           } else if (eeprom.settings.militaryTime == false){
             eeprom.settings.militaryTime = true;
+            EEPROM.put(0,eeprom);
+            drawTime();
+            tft.fillRect(285,110,20,20,ILI9341_BLACK);
+            delay(300);
           }
-          settings();
         }else if(touchPoint[1] > 165 && touchPoint[1] < 185){
           setPresetMessages();
         }else if(touchPoint[1] > 190 && touchPoint[1] < 230){
           if(touchPoint[0] > 240 && eeprom.settings.breadInterval < 15){
             eeprom.settings.breadInterval = eeprom.settings.breadInterval + 1;
+            EEPROM.put(0,eeprom);
+            delay(200);
           }else if (touchPoint[0] < 70 && eeprom.settings.breadInterval > 0){
             eeprom.settings.breadInterval = eeprom.settings.breadInterval - 1;
+            EEPROM.put(0,eeprom);
+            delay(200);
           }
-          settings(); //refresh the screen
+          tft.fillRect(230,190,49,40, ILI9341_BLACK);
+          tft.setTextColor(ILI9341_WHITE);  
+          tft.setTextSize(3);
+          tft.setCursor(230,195);
+          tft.println(eeprom.settings.breadInterval);
         }else if(touchPoint[0] < 50 && touchPoint[1] < 50){
           //before going to menu, we write everything back into eeprom for next time
           EEPROM.put(0,eeprom);
@@ -694,17 +759,7 @@ void coordinates(){
   tft.fillScreen(ILI9341_BLACK);
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   drawBack();
-  drawTime();
-
-  tft.setTextColor(ILI9341_WHITE);
-  tft.setCursor(130, 55);
-  tft.setTextSize(2);
-  tft.println("Bearing:");
-  tft.setCursor(130, 75);
-  drawBearing();
-
-  tft.setCursor(5, 100);
-  tft.println("coordinates here");
+  drawTime();  
 }
 
 void settings(){
@@ -718,7 +773,8 @@ void settings(){
   
   //checkbox for breadcrumbs
   tft.setCursor(10,60);
-  tft.setTextColor(ILI9341_WHITE);  tft.setTextSize(3);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
   tft.println("Breadcrumbs");
   tft.fillRect(280,60,30,30,ILI9341_CYAN);
   if(eeprom.settings.breadcrumbs == true){
@@ -728,7 +784,8 @@ void settings(){
   //checkbox for 24 hour time
   tft.fillRect(5,100,310,40, ILI9341_BLACK);
   tft.setCursor(10,105);
-  tft.setTextColor(ILI9341_WHITE);  tft.setTextSize(3);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
   tft.println("24 Hour Clock");
   tft.fillRect(280,105,30,30,ILI9341_CYAN);
   if(eeprom.settings.militaryTime == true){
@@ -737,13 +794,15 @@ void settings(){
   //text editor
   tft.fillRect(5,145,310,40, ILI9341_BLACK);
   tft.setCursor(10,150);
-  tft.setTextColor(ILI9341_WHITE);  tft.setTextSize(3);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
   tft.println("Set texts");
 
-  //time editor
+  //interval editor
   tft.fillRect(5,190,310,40, ILI9341_BLACK);
   tft.setCursor(50,195);
-  tft.setTextColor(ILI9341_WHITE);  tft.setTextSize(3);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
   tft.println("Interval: ");
   tft.setCursor(230,195);
   tft.println(eeprom.settings.breadInterval);
@@ -894,7 +953,7 @@ void SetupEeprom()
 
 
 
-void drawBearing(){ //all this code is shamelessly stolen
+void drawBearing(){
   sensors_event_t event; 
   mag.getEvent(&event);
       
@@ -908,7 +967,8 @@ void drawBearing(){ //all this code is shamelessly stolen
   {
     heading = 360 + heading;
   }
-  tft.println(heading);
+  tft.fillRect(100,75,180,25,ILI9341_BLACK);
+  tft.print(heading);
 }
 
 void SendMessage(int opt)
