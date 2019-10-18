@@ -88,6 +88,8 @@ bool sleeping = false;
 bool sosing = false;
 bool isNumBoard = false;
 bool isLower = true;
+char str[200];
+int preNum = 0;
 
 byte factorySettings;
 
@@ -304,8 +306,7 @@ void loop()
           }
           settings();
         }else if(touchPoint[1] > 165 && touchPoint[1] < 185){
-          //set text function
-          settings(); //refresh the screen
+          setPresetMessages();
         }else if(touchPoint[1] > 190 && touchPoint[1] < 230){
           if(touchPoint[0] > 240 && eeprom.settings.breadInterval < 15){
             eeprom.settings.breadInterval = eeprom.settings.breadInterval + 1;
@@ -336,498 +337,103 @@ void loop()
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] < 50 && touchPoint[1] < 50){
         customMessages();
-      } else if(touchPoint[0] <= 33 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
+      } else 
       {
-        //Q
-        if(!isNumBoard)
+        
+        tft.fillRect(0, 50, 320, 34, ILI9341_BLACK);
+        tft.setCursor(0,50);
+        tft.setTextColor(ILI9341_WHITE);
+        tft.setTextSize(3);
+        int count = DrawKeyboard(str);
+        if(count == -1)
+        {          
+          SendMessage(str);
+          Zero(str,200);
+        } else if(count <= 17)
         {
-          if(isLower)
-          {
-            Serial.print("q");
-          } else
-          {
-            Serial.print("Q");
-          }
+          tft.print(str);
         } else
         {
-          Serial.print("1");
-        }
-      } else if (touchPoint[0] <= 64 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
-      {
-        //W
-        if(!isNumBoard)
-        {
-          if(isLower)
+          for(int i = count-17; i <= count-1; i++)
           {
-            Serial.print("w");
-          } else
-          {
-            Serial.print("W");
-          }
-        } else
-        {
-          Serial.print("2");
-        }
-      } else if (touchPoint[0] <= 96 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
-      {
-        //E
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("e");
-          } else
-          {
-            Serial.print("E");
-          }
-        } else
-        {
-          Serial.print("3");
-        }
-      } else if (touchPoint[0] <= 128 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
-      {
-        //R
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("r");
-          } else
-          {
-            Serial.print("R");
-          }
-        } else
-        {
-          Serial.print("4");
-        }
-      } else if (touchPoint[0] <= 160 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
-      {
-        //T
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("t");
-          } else
-          {
-            Serial.print("T");
-          }
-        } else
-        {
-          Serial.print("5");
-        }
-      } else if (touchPoint[0] <= 192 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
-      {
-        //Y
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("y");
-          } else
-          {
-            Serial.print("Y");
-          }
-        } else
-        {
-          Serial.print("6");
-        }
-      } else if (touchPoint[0] <= 224 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
-      {
-        //U
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("u");
-          } else
-          {
-            Serial.print("U");
-          }
-        } else
-        {
-          Serial.print("7");
-        }
-      } else if (touchPoint[0] <= 256 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
-      {
-        //I
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("i");
-          } else
-          {
-            Serial.print("I");
-          }
-        } else
-        {
-          Serial.print("8");
-        }
-      } else if (touchPoint[0] <= 288 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
-      {
-        //O
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("o");
-          } else
-          {
-            Serial.print("O");
-          }
-        } else
-        {
-          Serial.print("9");
-        }
-      } else if (touchPoint[0] <= 320 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
-      {
-        //P
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("p");
-          } else
-          {
-            Serial.print("P");
-          }
-        } else
-        {
-          Serial.print("0");
-        }
-      } 
-      
-      else if (touchPoint[0] <= 47 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
-      {
-        //A
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("a");
-          } else
-          {
-            Serial.print("A");
-          }
-        } else
-        {
-          Serial.print("!");
-        }
-      } else if (touchPoint[0] <= 79 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
-      {
-        //S
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("s");
-          } else
-          {
-            Serial.print("S");
-          }
-        } else
-        {
-          Serial.print("@");
-        }
-      } else if (touchPoint[0] <= 111 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
-      {
-        //D
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("d");
-          } else
-          {
-            Serial.print("D");
-          }
-        } else
-        {
-          Serial.print("#");
-        }
-      } else if (touchPoint[0] <= 143 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
-      {
-        //F
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("f");
-          } else
-          {
-            Serial.print("F");
-          }
-        } else
-        {
-          Serial.print("%");
-        }
-      } else if (touchPoint[0] <= 175 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
-      {
-        //G
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("g");
-          } else
-          {
-            Serial.print("G");
-          }
-        } else
-        {
-          Serial.print("$");
-        }
-      } else if (touchPoint[0] <= 207 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
-      {
-        //H
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("h");
-          } else
-          {
-            Serial.print("H");
-          }
-        } else
-        {
-          Serial.print("^");
-        }
-      } else if (touchPoint[0] <= 239 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
-      {
-        //J
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("j");
-          } else
-          {
-            Serial.print("J");
-          }
-        } else
-        {
-          Serial.print("&");
-        }
-      } else if (touchPoint[0] <= 271 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
-      {
-        //K
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("k");
-          } else
-          {
-            Serial.print("K");
-          }
-        } else
-        {
-          Serial.print("*");
-        }
-      } else if (touchPoint[0] <= 320 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
-      {
-        //L
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("l");
-          } else
-          {
-            Serial.print("L");
-          }
-        } else
-        {
-          Serial.print("/");
-        }
-      } 
-      
-      else if (touchPoint[0] <= 32 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
-      {
-        //^
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            tft.fillRect(0,50,320,240,ILI9341_BLACK);
-            tft.drawBitmap(0,0,keyboard,320,240,ILI9341_WHITE);
-            isLower = false;
-          } else
-          {
-            tft.fillRect(0,50,320,240,ILI9341_BLACK);
-            tft.drawBitmap(0,0,keyboardlower,320,240,ILI9341_WHITE);
-            isLower = true;
+            tft.print(str[i]);
           }
         }
-      } else if (touchPoint[0] <= 64 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
-      {
-        //Z
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("z");
-          } else
-          {
-            Serial.print("Z");
-          }
-        } else
-        {
-          Serial.print(":");
-        }
-      } else if (touchPoint[0] <= 96 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
-      {
-        //X
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("x");
-          } else
-          {
-            Serial.print("X");
-          }
-        } else
-        {
-          Serial.print(";");
-        }
-      } else if (touchPoint[0] <= 128 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
-      {
-        //C
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("c");
-          } else
-          {
-            Serial.print("C");
-          }
-        } else
-        {
-          Serial.print("'");
-        }
-      } else if (touchPoint[0] <= 160 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
-      {
-        //V
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("v");
-          } else
-          {
-            Serial.print("V");
-          }
-        } else
-        {
-          Serial.print("\"");
-        }
-      } else if (touchPoint[0] <= 192 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
-      {
-        //B
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("b");
-          } else
-          {
-            Serial.print("B");
-          }
-        } else
-        {
-          Serial.print("-");
-        }
-      } else if (touchPoint[0] <= 224 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
-      {
-        //N
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("n");
-          } else
-          {
-            Serial.print("N");
-          }
-        } else
-        {
-          Serial.print("(");
-        }
-      } else if (touchPoint[0] <= 256 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
-      {
-        //M
-        if(!isNumBoard)
-        {
-          if(isLower)
-          {
-            Serial.print("m");
-          } else
-          {
-            Serial.print("M");
-          }
-        } else
-        {
-          Serial.print(")");
-        }
-      } else if (touchPoint[0] <= 320 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
-      {
-        //<--
-      } 
-      
-      else if (touchPoint[0] <= 32 && touchPoint[1] >= 201)
-      {
-        //Num
-        if(!isNumBoard)
-        {
-          tft.fillRect(0,50,320,240,ILI9341_BLACK);
-          tft.drawBitmap(0,0,numpad,320,240,ILI9341_WHITE);
-          isNumBoard = true;
-        } else
-        {
-          tft.fillRect(0,50,320,240,ILI9341_BLACK);
-          if(isLower)
-          {
-            tft.drawBitmap(0,0,keyboardlower,320,240,ILI9341_WHITE);
-          } else 
-          {
-            tft.drawBitmap(0,0,keyboard,320,240,ILI9341_WHITE);
-          }
-          isNumBoard = false;
-        }
-      } else if (touchPoint[0] <= 64 && touchPoint[1] >= 201)
-      {
-        //?
-        if(!isNumBoard)
-        {
-          Serial.print("?");
-        } else
-        {
-          Serial.print("_");
-        }
-      } else if (touchPoint[0] <= 96 && touchPoint[1] >= 201)
-      {
-        //,
-        Serial.print(",");
-      } else if (touchPoint[0] <= 224 && touchPoint[1] >= 201)
-      {
-        //Space
-        Serial.print(" ");
-      } else if (touchPoint[0] <= 256 && touchPoint[1] >= 201)
-      {
-        //.
-        Serial.print(".");
-      } else if (touchPoint[0] <= 320 && touchPoint[1] >= 201)
-      {
-        //Send
+        
       }
-      delay(300);
     }
     
-  }//we probably need another screen for the custom texts
+  } else if(mode == 9) {
+    EEPROM.get(0,eeprom);
+    if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
+      if(touchPoint[0] > 160 && touchPoint[1] > 145){
+        preNum = 3;
+        typePresetMessages();
+      } else if(touchPoint[0] < 160 && touchPoint[1] > 145){
+        preNum = 2;
+        typePresetMessages();
+      }else if(touchPoint[0] > 160 && touchPoint[1] > 50){
+        preNum = 1;
+        typePresetMessages();
+      }else if(touchPoint[0] < 160 && touchPoint[1] > 50){
+        preNum = 0;
+        typePresetMessages();
+      }else if(touchPoint[0] < 50 && touchPoint[1] < 50){
+        settings();
+      }
+    }
+    
+  }else if(mode == 10)
+  {
+    if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
+      if(touchPoint[0] < 50 && touchPoint[1] < 50){
+        setPresetMessages();
+      } else 
+      {
+        
+        tft.fillRect(0, 50, 320, 34, ILI9341_BLACK);
+        tft.setCursor(0,50);
+        tft.setTextColor(ILI9341_WHITE);
+        tft.setTextSize(3);
+        int count = DrawKeyboard(str);
+        if(count == -1)
+        {          
+          if(preNum == 0)
+          {
+            strcpy(eeprom.settings.predefinedMessages[0], str);
+            EEPROM.put(0,eeprom);
+            setPresetMessages();
+          } else if(preNum == 1)
+          {
+            strcpy(eeprom.settings.predefinedMessages[1], str);
+            EEPROM.put(0,eeprom);
+            setPresetMessages();
+          } else if(preNum == 2)
+          {
+            strcpy(eeprom.settings.predefinedMessages[2], str);
+            EEPROM.put(0,eeprom);
+            setPresetMessages();
+          } else if(preNum == 3)
+          {
+            strcpy(eeprom.settings.predefinedMessages[3], str);
+            EEPROM.put(0,eeprom);
+            setPresetMessages();
+          }
+          Zero(str,200);
+        } else if(count <= 17)
+        {
+          tft.print(str);
+        } else
+        {
+          for(int i = count-17; i <= count-1; i++)
+          {
+            tft.print(str[i]);
+          }
+        }
+        
+      }
+    }
+  }
   
   
   if(mode != 7)
@@ -1182,6 +788,30 @@ void TypeMsg()
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   drawBack();
   drawTime();
+  Zero(str,200);
+
+  tft.drawBitmap(0,0,keyboardlower,320,240,ILI9341_WHITE);
+}
+
+void setPresetMessages()
+{
+  presetMessages();
+  mode = 9;
+}
+
+void typePresetMessages()
+{
+  mode = 10;
+  isLower = true;
+  isNumBoard = false;
+  
+  tft.fillScreen(ILI9341_BLACK);
+  Serial1.print("\nX\n");
+  Serial1.println("SDefine Pre-Set Messages");
+  tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
+  drawBack();
+  drawTime();
+  Zero(str,200);
 
   tft.drawBitmap(0,0,keyboardlower,320,240,ILI9341_WHITE);
 }
@@ -1217,6 +847,14 @@ void mainMenu(){
   tft.print("Settings");
   
   drawTime();
+}
+
+void Zero(char * str, int len)
+{
+  for(int i = len-1; i >= 0; i--)
+  {
+    str[i] = '\0';
+  }
 }
 
 
@@ -1361,6 +999,45 @@ void SendMessage(int opt)
   tft.fillRect(52, 0, 92, 50, ILI9341_WHITE);
   EEPROM.put(0,eeprom);
 }
+void SendMessage(char * str)
+{
+  Serial.print(eeprom.settings.recipient);
+  Serial.print("|");
+  Serial.print(rtc.year());
+  Serial.print("/");
+  Serial.print(rtc.month());
+  Serial.print("/");
+  Serial.print(rtc.date());
+  Serial.print("|");
+  Serial.print(rtc.hour());
+  Serial.print(":");
+  Serial.print(rtc.minute());
+  Serial.print(":");
+  Serial.print(rtc.second());
+  Serial.print("|");
+  //TODO GPS COORDS
+  Serial.print(str);
+  
+  strcpy(eeprom.outbox.recipient,eeprom.settings.recipient);
+  eeprom.outbox.coords.dateTime.year = rtc.year();
+  eeprom.outbox.coords.dateTime.month = rtc.month();
+  eeprom.outbox.coords.dateTime.day = rtc.date();
+  eeprom.outbox.coords.dateTime.hour = rtc.hour();
+  eeprom.outbox.coords.dateTime.minute = rtc.minute();
+  eeprom.outbox.coords.dateTime.second = rtc.second();
+  //TODO GPS COORDS
+  strcpy(eeprom.outbox.content,str);
+    
+  Serial.print("\n");
+  tft.setCursor(52, 10);
+  tft.setTextColor(0x0000);
+  tft.setTextSize(4);
+  tft.print("SENT");
+  Serial1.println("SMessage Sent");
+  delay(1000);
+  tft.fillRect(52, 0, 92, 50, ILI9341_WHITE);
+  EEPROM.put(0,eeprom);
+}
 
 void drawBack()
 {
@@ -1448,6 +1125,586 @@ void drawTime() {
     if(rtc.minute() < 10) 
       tft.print("0");
     tft.print(rtc.minute());
-  }
+  }  
+}
+int DrawKeyboard(char * str)
+{
+  int count = strlen(str);
+  if(touchPoint[0] <= 33 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
+  {
+    //Q
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'q';
+        count++;
+      } else
+      {
+        str[count] = 'Q';
+        count++;
+      }
+    } else
+    {
+      str[count] = '1';
+      count++;
+    }
+  } else if (touchPoint[0] <= 64 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
+  {
+    //W
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'w';
+        count++;
+      } else
+      {
+        str[count] = 'W';
+        count++;
+      }
+    } else
+    {
+      str[count] = '2';
+      count++;
+    }
+  } else if (touchPoint[0] <= 96 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
+  {
+    //E
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'e';
+        count++;
+      } else
+      {
+        str[count] = 'E';
+        count++;
+      }
+    } else
+    {
+      str[count] = '3';
+      count++;
+    }
+  } else if (touchPoint[0] <= 128 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
+  {
+    //R
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'r';
+        count++;
+      } else
+      {
+        str[count] = 'R';
+        count++;
+      }
+    } else
+    {
+      str[count] = '4';
+      count++;
+    }
+  } else if (touchPoint[0] <= 160 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
+  {
+    //T
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 't';
+        count++;
+      } else
+      {
+        str[count] = 'T';
+        count++;
+      }
+    } else
+    {
+      str[count] = '5';
+      count++;
+    }
+  } else if (touchPoint[0] <= 192 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
+  {
+    //Y
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'y';
+        count++;
+      } else
+      {
+        str[count] = 'Y';
+        count++;
+      }
+    } else
+    {
+      str[count] = '6';
+      count++;
+    }
+  } else if (touchPoint[0] <= 224 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
+  {
+    //U
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'u';
+        count++;
+      } else
+      {
+        str[count] = 'U';
+        count++;
+      }
+    } else
+    {
+      str[count] = '7';
+      count++;
+    }
+  } else if (touchPoint[0] <= 256 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
+  {
+    //I
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'i';
+        count++;
+      } else
+      {
+        str[count] = 'I';
+        count++;
+      }
+    } else
+    {
+      str[count] = '8';
+      count++;
+    }
+  } else if (touchPoint[0] <= 288 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
+  {
+    //O
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'o';
+        count++;
+      } else
+      {
+        str[count] = 'O';
+        count++;
+      }
+    } else
+    {
+      str[count] = '9';
+      count++;
+    }
+  } else if (touchPoint[0] <= 320 && touchPoint[1] <= 122 && touchPoint[1] >= 84)
+  {
+    //P
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'p';
+        count++;
+      } else
+      {
+        str[count] = 'P';
+        count++;
+      }
+    } else
+    {
+      str[count] = '0';
+      count++;
+    }
+  } 
   
+  else if (touchPoint[0] <= 47 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
+  {
+    //A
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'a';
+        count++;
+      } else
+      {
+        str[count] = 'A';
+        count++;
+      }
+    } else
+    {
+      str[count] = '!';
+      count++;
+    }
+  } else if (touchPoint[0] <= 79 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
+  {
+    //S
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 's';
+        count++;
+      } else
+      {
+        str[count] = 'S';
+        count++;
+      }
+    } else
+    {
+      str[count] = '@';
+      count++;
+    }
+  } else if (touchPoint[0] <= 111 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
+  {
+    //D
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'd';
+        count++;
+      } else
+      {
+        str[count] = 'D';
+        count++;
+      }
+    } else
+    {
+      str[count] = '#';
+      count++;
+    }
+  } else if (touchPoint[0] <= 143 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
+  {
+    //F
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'f';
+        count++;
+      } else
+      {
+        str[count] = 'F';
+        count++;
+      }
+    } else
+    {
+      str[count] = '%';
+      count++;
+    }
+  } else if (touchPoint[0] <= 175 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
+  {
+    //G
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'g';
+        count++;
+      } else
+      {
+        str[count] = 'G';
+        count++;
+      }
+    } else
+    {
+      str[count] = '$';
+      count++;
+    }
+  } else if (touchPoint[0] <= 207 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
+  {
+    //H
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'h';
+        count++;
+      } else
+      {
+        str[count] = 'H';
+        count++;
+      }
+    } else
+    {
+      str[count] = '^';
+      count++;
+    }
+  } else if (touchPoint[0] <= 239 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
+  {
+    //J
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'j';
+        count++;
+      } else
+      {
+        str[count] = 'J';
+        count++;
+      }
+    } else
+    {
+      str[count] = '&';
+      count++;
+    }
+  } else if (touchPoint[0] <= 271 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
+  {
+    //K
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'k';
+        count++;
+      } else
+      {
+        str[count] = 'K';
+        count++;
+      }
+    } else
+    {
+      str[count] = '*';
+      count++;
+    }
+  } else if (touchPoint[0] <= 320 && touchPoint[1] <= 161 && touchPoint[1] >= 123)
+  {
+    //L
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'l';
+        count++;
+      } else
+      {
+        str[count] = 'L';
+        count++;
+      }
+    } else
+    {
+      str[count] = '/';
+      count++;
+    }
+  } 
+  
+  else if (touchPoint[0] <= 32 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
+  {
+    //^
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        tft.fillRect(0,50,320,240,ILI9341_BLACK);
+        tft.drawBitmap(0,0,keyboard,320,240,ILI9341_WHITE);
+        isLower = false;
+      } else
+      {
+        tft.fillRect(0,50,320,240,ILI9341_BLACK);
+        tft.drawBitmap(0,0,keyboardlower,320,240,ILI9341_WHITE);
+        isLower = true;
+      }
+    }
+  } else if (touchPoint[0] <= 64 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
+  {
+    //Z
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'z';
+        count++;
+      } else
+      {
+        str[count] = 'Z';
+        count++;
+      }
+    } else
+    {
+      str[count] = ':';
+      count++;
+    }
+  } else if (touchPoint[0] <= 96 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
+  {
+    //X
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'x';
+        count++;
+      } else
+      {
+        str[count] = 'X';
+        count++;
+      }
+    } else
+    {
+      str[count] = ';';
+      count++;
+    }
+  } else if (touchPoint[0] <= 128 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
+  {
+    //C
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'c';
+        count++;
+      } else
+      {
+        str[count] = 'C';
+        count++;
+      }
+    } else
+    {
+      str[count] = '\'';
+      count++;
+    }
+  } else if (touchPoint[0] <= 160 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
+  {
+    //V
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'v';
+        count++;
+      } else
+      {
+        str[count] = 'V';
+        count++;
+      }
+    } else
+    {
+      str[count] = '\"';
+      count++;
+    }
+  } else if (touchPoint[0] <= 192 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
+  {
+    //B
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'b';
+        count++;
+      } else
+      {
+        str[count] = 'B';
+        count++;
+      }
+    } else
+    {
+      str[count] = '-';
+      count++;
+    }
+  } else if (touchPoint[0] <= 224 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
+  {
+    //N
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'n';
+        count++;
+      } else
+      {
+        str[count] = 'N';
+        count++;
+      }
+    } else
+    {
+      str[count] = '(';
+      count++;
+    }
+  } else if (touchPoint[0] <= 256 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
+  {
+    //M
+    if(!isNumBoard)
+    {
+      if(isLower)
+      {
+        str[count] = 'm';
+        count++;
+      } else
+      {
+        str[count] = 'M';
+        count++;
+      }
+    } else
+    {
+      str[count] = ')';
+      count++;
+    }
+  } else if (touchPoint[0] <= 320 && touchPoint[1] <= 200 && touchPoint[1] >= 162)
+  {
+    //<--
+    count--;
+    str[count] = '\0';
+  } 
+  
+  else if (touchPoint[0] <= 32 && touchPoint[1] >= 201)
+  {
+    //Num
+    if(!isNumBoard)
+    {
+      tft.fillRect(0,50,320,240,ILI9341_BLACK);
+      tft.drawBitmap(0,0,numpad,320,240,ILI9341_WHITE);
+      isNumBoard = true;
+    } else
+    {
+      tft.fillRect(0,50,320,240,ILI9341_BLACK);
+      if(isLower)
+      {
+        tft.drawBitmap(0,0,keyboardlower,320,240,ILI9341_WHITE);
+      } else 
+      {
+        tft.drawBitmap(0,0,keyboard,320,240,ILI9341_WHITE);
+      }
+      isNumBoard = false;
+    }
+  } else if (touchPoint[0] <= 64 && touchPoint[1] >= 201)
+  {
+    //?
+    if(!isNumBoard)
+    {
+      str[count] = '?';
+      count++;
+    } else
+    {
+      str[count] = '_';
+      count++;
+    }
+  } else if (touchPoint[0] <= 96 && touchPoint[1] >= 201)
+  {
+    //,
+    str[count] = ',';
+    count++;
+  } else if (touchPoint[0] <= 224 && touchPoint[1] >= 201)
+  {
+    //Space
+    str[count] = ' ';
+    count++;
+  } else if (touchPoint[0] <= 256 && touchPoint[1] >= 201)
+  {
+    //.
+    str[count] = '.';
+    count++;
+  } else if (touchPoint[0] <= 320 && touchPoint[1] >= 201)
+  {
+    //Send
+    count = 0;
+    return -1;
+  }
+  delay(200);
+  return count;
 }
