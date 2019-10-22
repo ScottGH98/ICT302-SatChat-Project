@@ -44,7 +44,7 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 long int touchPoint[2];
 int mode = 0;
 TinyGPS gps;
-float lat = 0,lon = 0;
+float lat, lon;
 int gpsYear;
 byte gpsMonth, gpsDay, gpsHour, gpsMinute, gpsSecond, gpsHundredth;
 unsigned long fix_age;
@@ -65,8 +65,8 @@ struct DateTime
 };
 struct GPS
 {
-  double longitude;
-  double latitude;
+  float longitude;
+  float latitude;
   struct DateTime dateTime;
 };
 struct Message
@@ -104,7 +104,7 @@ int preNum = 0;
 int incomingByte;
 int lastTime = 0;
 int lastDate = 0;
-int breadCount = 0;
+int breadCount = 1000;
 int intervalMins[] = {0,1,2,5,10,15,30,60,120,180,240,300,360,720};
 float timezones[] = {-12,-11,-10,-9.5,-9,-8,-7,-6,-5,-4,-3.5,-3,-2,-1,0,1,2,3,3.5,4,4.5,5,5.5,5.75,6,6.5,7,8,8.75,9,9.5,10,10.5,11,12,12.75,13,14};
 
@@ -205,7 +205,7 @@ void loop()
     {  
       gps.crack_datetime(&gpsYear, &gpsMonth, &gpsDay, &gpsHour, 
         &gpsMinute, &gpsSecond, &gpsHundredth, &fix_age);
-      gps.f_get_position(&lat,&lon);
+      gps.f_get_position(&lat,&lon);  
     }
   }
   GetGpsTime();
@@ -272,9 +272,9 @@ void loop()
           tft.print("/");
           tft.print(eeprom.inbox.coords.dateTime.year);
           tft.print(" - ");
-          tft.print(lat);
+          tft.print(lat,6);
           tft.print(",");
-          tft.print(lon);
+          tft.print(lon,6);
           tft.print("\n");
           tft.setTextSize(2);
           textWrap(eeprom.inbox.content,26,10);
@@ -299,9 +299,9 @@ void loop()
           tft.print("/");
           tft.print(eeprom.outbox.coords.dateTime.year);
           tft.print(" - ");
-          tft.print(lat);
+          tft.print(lat,6);
           tft.print(",");
-          tft.print(lon);
+          tft.print(lon,6);
           tft.print("\n");
           tft.setTextSize(2);
           textWrap(eeprom.outbox.content,26,10);
@@ -731,7 +731,7 @@ void loop()
         if(eeprom.settings.breadInterval != 0)
         {
           breadCount++;
-          if(breadCount == eeprom.settings.breadInterval)
+          if(breadCount >= eeprom.settings.breadInterval)
           {
             Serial1.println("SBreadcrumb Sent.");
             SendBread();
@@ -926,7 +926,6 @@ void customMessages(){
   tft.setCursor(5, 55);
   tft.setTextColor(0x0000);
   tft.setTextSize(1);
-  tft.print("Outbox ");
   tft.print(eeprom.outbox.recipient);
   tft.print("  ");
   if(eeprom.outbox.coords.dateTime.hour < 10)
@@ -965,7 +964,6 @@ void customMessages(){
   tft.setCursor(5, 150);
   tft.setTextColor(0x0000);
   tft.setTextSize(1);
-  tft.print("Inbox ");
   tft.print(eeprom.inbox.sender);
   tft.print("  ");
   if(eeprom.outbox.coords.dateTime.hour < 10)
@@ -1401,13 +1399,13 @@ void GetGpsTime()
       {
         if(mode == 3)
         {
-          tft.fillRect(100,100,200,120,ILI9341_BLACK);
+          tft.fillRect(100,100,220,120,ILI9341_BLACK);
           tft.setCursor(110, 100);
           tft.print("Lat: ");
-          tft.print(lat);
+          tft.print(lat,6);
           tft.setCursor(110, 120);
           tft.print("Long: ");
-          tft.println(lon);
+          tft.println(lon,6);
           tft.setCursor(110, 140);
           tft.print(gpsDay);
           tft.print("/");
@@ -1728,9 +1726,36 @@ void SendMessage(int opt)
   }
   Serial.print(rtc.second());
   Serial.print("|");
-  Serial.print(lat);
+  Serial.print(eeprom.settings.utcOffset);
+  Serial.print("|");
+  
+  Serial.print(lat,6);
   Serial.print(",");
-  Serial.print(lon);
+  Serial.print(lon,6);
+  Serial.print("|");
+  Serial.print(gpsYear);
+  Serial.print("/");
+  Serial.print(gpsMonth);
+  Serial.print("/");
+  Serial.print(gpsDay);
+  Serial.print("|");
+  if(gpsHour < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.print(gpsHour);
+  Serial.print(":");
+  if(gpsMinute < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.print(gpsMinute);
+  Serial.print(":");
+  if(gpsSecond < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.print(gpsSecond);
   Serial.print("|");
   if(opt == 1)
   {
@@ -1836,10 +1861,38 @@ void SendMessage(char * str)
   }
   Serial.print(rtc.second());
   Serial.print("|");
-  Serial.print(lat);
-  Serial.print(",");
-  Serial.print(lon);
+  Serial.print(eeprom.settings.utcOffset);
   Serial.print("|");
+  
+  Serial.print(lat,6);
+  Serial.print(",");
+  Serial.print(lon,6);
+  Serial.print("|");
+  Serial.print(gpsYear);
+  Serial.print("/");
+  Serial.print(gpsMonth);
+  Serial.print("/");
+  Serial.print(gpsDay);
+  Serial.print("|");
+  if(gpsHour < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.print(gpsHour);
+  Serial.print(":");
+  if(gpsMinute < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.print(gpsMinute);
+  Serial.print(":");
+  if(gpsSecond < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.print(gpsSecond);
+  Serial.print("|");
+  
   Serial.print(str);
 
   strcpy(eeprom.outbox.recipient,eeprom.settings.recipient);
@@ -1892,10 +1945,38 @@ void SendBread()
   }
   Serial.print(rtc.second());
   Serial.print("|");
-  Serial.print(lat);
-  Serial.print(",");
-  Serial.print(lon);
+  Serial.print(eeprom.settings.utcOffset);
   Serial.print("|");
+  
+  Serial.print(lat,6);
+  Serial.print(",");
+  Serial.print(lon,6);
+  Serial.print("|");
+  Serial.print(gpsYear);
+  Serial.print("/");
+  Serial.print(gpsMonth);
+  Serial.print("/");
+  Serial.print(gpsDay);
+  Serial.print("|");
+  if(gpsHour < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.print(gpsHour);
+  Serial.print(":");
+  if(gpsMinute < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.print(gpsMinute);
+  Serial.print(":");
+  if(gpsSecond < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.print(gpsSecond);
+  Serial.print("|");
+  
   Serial.println("Current Location");
   
 }
