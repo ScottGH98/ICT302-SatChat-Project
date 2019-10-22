@@ -560,13 +560,7 @@ void loop()
       }else if(touchPoint[1] > 110 && touchPoint[1] < 160){
         if(eeprom.settings.gpsTime == true){
           eeprom.settings.gpsTime = false;
-
-          tft.fillRect(5,145,310,40, ILI9341_BLACK);
-          tft.setCursor(10,150);
-          tft.setTextColor(ILI9341_WHITE);  
-          tft.setTextSize(3);
-          tft.println("Set Time");
-
+          
           tft.fillRect(5,190,310,40, ILI9341_BLACK);
           tft.setCursor(10,195);
           tft.setTextColor(ILI9341_WHITE);  
@@ -579,12 +573,6 @@ void loop()
           delay(300);
         } else if (eeprom.settings.gpsTime == false){
           eeprom.settings.gpsTime = true;
-          
-          tft.fillRect(5,145,310,40, 0x8410);
-          tft.setCursor(10,150);
-          tft.setTextColor(ILI9341_WHITE);  
-          tft.setTextSize(3);
-          tft.println("Set Time");
 
           tft.fillRect(5,190,310,40, 0x8410);
           tft.setCursor(10,195);
@@ -597,7 +585,7 @@ void loop()
           tft.fillRect(285,110,20,20,ILI9341_BLACK);
           delay(300);
         }          
-      }else if(touchPoint[1] > 165 && touchPoint[1] < 185 && !eeprom.settings.gpsTime){
+      }else if(touchPoint[1] > 165 && touchPoint[1] < 185){
         timeSettings();
         
       }else if(touchPoint[1] > 190 && touchPoint[1] < 230 && !eeprom.settings.gpsTime){
@@ -612,7 +600,7 @@ void loop()
   } else if(mode == 13) //Time Settings
   {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
-      if(touchPoint[1] > 60 && touchPoint[1] < 110){  
+      if(touchPoint[1] > 60 && touchPoint[1] < 110 && !eeprom.settings.gpsTime){  
           if(touchPoint[0] > 240 && rtc.getHour() < 23){
           rtc.setHour(rtc.getHour() + 1);
           delay(200);
@@ -626,7 +614,7 @@ void loop()
         tft.setCursor(220,60);
         tft.print(rtc.getHour());
         drawTime();
-      }else if(touchPoint[1] > 110 && touchPoint[1] < 160){
+      }else if(touchPoint[1] > 110 && touchPoint[1] < 160 && !eeprom.settings.gpsTime){
         if(touchPoint[0] > 240 && rtc.getMinute() < 59){
           rtc.setMinute(rtc.getMinute() + 1);
           delay(200);
@@ -640,7 +628,7 @@ void loop()
         tft.setCursor(220,105);
         tft.println(rtc.getMinute());   
         drawTime();  
-      }else if(touchPoint[1] > 165 && touchPoint[1] < 185){
+      }else if(touchPoint[1] > 165 && touchPoint[1] < 185 && !eeprom.settings.gpsTime){
         if(touchPoint[0] > 240 && rtc.getSecond() < 59){
           rtc.setSecond(rtc.getSecond() + 1);
           delay(200);
@@ -1131,13 +1119,7 @@ void clockSettings()
   }
 
   //Time
-  if(!eeprom.settings.gpsTime)
-  {
-    tft.fillRect(5,145,310,40, ILI9341_BLACK);
-  } else
-  {
-    tft.fillRect(5,145,310,40, 0x8410);
-  }
+  tft.fillRect(5,145,310,40, ILI9341_BLACK);
   tft.setCursor(10,150);
   tft.setTextColor(ILI9341_WHITE);  
   tft.setTextSize(3);
@@ -1170,7 +1152,13 @@ void timeSettings()
   tft.fillRect(0,50,320,240, ILI9341_CYAN);
 
   //Hour
-  tft.fillRect(5,55,310,40, ILI9341_BLACK);
+  if(!eeprom.settings.gpsTime)
+  {
+    tft.fillRect(5,55,310,40, ILI9341_BLACK);
+  } else
+  {
+    tft.fillRect(5,55,310,40, 0x8410);
+  }
   tft.setCursor(50,60);
   tft.setTextColor(ILI9341_WHITE);  
   tft.setTextSize(3);
@@ -1183,7 +1171,13 @@ void timeSettings()
   tft.fillTriangle(305,75,290,65,290,85, ILI9341_BLACK);
 
   //Minute
-  tft.fillRect(5,100,310,40, ILI9341_BLACK);
+  if(!eeprom.settings.gpsTime)
+  {
+    tft.fillRect(5,100,310,40, ILI9341_BLACK);
+  } else
+  {
+    tft.fillRect(5,100,310,40, 0x8410);
+  }
   tft.setCursor(50,105);
   tft.setTextColor(ILI9341_WHITE);  
   tft.setTextSize(3);
@@ -1196,7 +1190,13 @@ void timeSettings()
   tft.fillTriangle(305,120,290,110,290,130, ILI9341_BLACK);
 
   //Second
-  tft.fillRect(5,145,310,40, ILI9341_BLACK);
+  if(!eeprom.settings.gpsTime)
+  {
+    tft.fillRect(5,145,310,40, ILI9341_BLACK);
+  } else
+  {
+    tft.fillRect(5,145,310,40, 0x8410);
+  }
   tft.setCursor(50,150);
   tft.setTextColor(ILI9341_WHITE);  
   tft.setTextSize(3);
