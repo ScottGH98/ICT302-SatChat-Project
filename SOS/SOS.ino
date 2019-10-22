@@ -83,7 +83,9 @@ struct Settings
   int currentInterval;
   bool militaryTime;
   char recipient[15];
-  short utcOffset;
+  float utcOffset;
+  short currentOffset;
+  bool gpsTime;
 };
 struct Eeprom
 {
@@ -104,6 +106,7 @@ int lastTime = 0;
 int lastDate = 0;
 int breadCount = 0;
 int intervalMins[] = {0,1,2,5,10,15,30,60,120,180,240,300,360,720};
+float timezones[] = {-12,-11,-10,-9.5,-9,-8,-7,-6,-5,-4,-3.5,-3,-2,-1,0,1,2,3,3.5,4,4.5,5,5.5,5.75,6,6.5,7,8,8.75,9,9.5,10,10.5,11,12,12.75,13,14};
 
 byte factorySettings;
 
@@ -205,8 +208,10 @@ void loop()
       gps.f_get_position(&lat,&lon);
     }
   }
+  GetGpsTime();
  
-  if(mode == 0) {
+  if(mode == 0) //Main Menu
+  {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] > 160 && touchPoint[1] > 145){ //cyan
         settings();
@@ -219,7 +224,8 @@ void loop()
       }
     }
     
-  }else if(mode == 1) {
+  }else if(mode == 1) //Predefined Messages
+  {
     EEPROM.get(0,eeprom);
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] > 160 && touchPoint[1] > 145){
@@ -242,7 +248,8 @@ void loop()
       }
     }
     
-  }else if(mode == 2) {
+  }else if(mode == 2) //Custom Messages
+  {
     EEPROM.get(0,eeprom);
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[1] > 145){
@@ -309,7 +316,8 @@ void loop()
         
     }
         
-  }else if(mode == 3) {
+  }else if(mode == 3) //GPS Coordinates
+  {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){        
       if(touchPoint[0] < 50 && touchPoint[1] < 50){
         mainMenu();
@@ -323,188 +331,10 @@ void loop()
       tft.println("Bearing:");
       tft.setCursor(130, 75);
       drawBearing();
-      
-      if((gpsHour*100*100)+(gpsMinute*100)+(gpsSecond) > lastTime || (gpsYear*100*100)+(gpsMonth*100)+(gpsDay) > lastDate)
-      {
-        tft.fillRect(100,100,200,120,ILI9341_BLACK);
-        //gps.f_get_position(&lat,&lon);
-        tft.setCursor(110, 100);
-        tft.print("Lat: ");
-        tft.print(lat);
-        tft.setCursor(110, 120);
-        tft.print("Long: ");
-        tft.println(lon);
-        //gps.crack_datetime(&gpsYear, &gpsMonth, &gpsDay, &gpsHour, 
-        //  &gpsMinute, &gpsSecond, &gpsHundredth, &fix_age);
-        tft.setCursor(110, 140);
-        tft.print(gpsDay);
-        tft.print("/");
-        tft.print(gpsMonth);
-        tft.print("/");
-        tft.print(gpsYear);
-        tft.setCursor(110, 160);
-        if(gpsHour < 10)
-        {
-          tft.print("0");
-        }
-        tft.print(gpsHour);
-        tft.print(":");
-        if(gpsMinute < 10)
-        {
-          tft.print("0");
-        }
-        tft.print(gpsMinute);
-        tft.print(":");
-        if(gpsSecond < 10)
-        {
-          tft.print("0");
-        }
-        tft.print(gpsSecond);
-        tft.println(" UTC");
-
-        int h,m,s,y,mn,d;
-        //calculate UTC OFFSET
-        if((gpsHour + eeprom.settings.utcOffset) >= 0 && (gpsHour + eeprom.settings.utcOffset) < 24)
-        {
-          h = gpsHour + eeprom.settings.utcOffset;
-          y = gpsYear;
-          mn = gpsMonth;
-          d = gpsDay;
-        } else if(gpsHour + eeprom.settings.utcOffset < 0)  //Go back a day
-        {
-          h = gpsHour + eeprom.settings.utcOffset + 24;
-          if(gpsDay == 1)
-          {
-            if(gpsMonth == 1)
-            {
-              mn = 12;
-              d = 31;
-              y = gpsYear - 1;
-            } else if(gpsMonth == 5 || gpsMonth == 7 || gpsMonth == 10 || gpsMonth == 12)
-            {
-              mn = gpsMonth -1;
-              d = 30;
-            } else if(gpsMonth == 3)
-            {
-              mn = gpsMonth - 1;
-              if(((gpsYear % 4) == 0))
-              {
-                d = 29;
-              } else
-              {
-                d = 28;
-              }
-            } else
-            {
-              mn = gpsMonth - 1;
-              d = 31;
-            }
-          } else
-          {
-            d = gpsDay - 1;
-          }
-          
-        } else if(gpsHour + eeprom.settings.utcOffset >= 24)
-        {
-          h = gpsHour + eeprom.settings.utcOffset - 24;
-          if(gpsMonth == 4 || gpsMonth == 6 || gpsMonth == 9 || gpsMonth == 11)
-          {
-            if(gpsDay == 30)
-            {
-              d = 1;
-              mn = gpsMonth + 1;
-            }
-            else
-            {
-              d = gpsDay + 1;
-            }
-          } else if(gpsMonth == 2)
-          {
-            if(((gpsYear % 4) == 0))
-            {
-              if(gpsDay == 29)
-              {
-                mn = gpsMonth + 1;
-                d = 1;
-              }
-              else
-              {
-                d = gpsDay + 1;
-              }
-            } else
-            {
-              if(gpsDay == 28)
-              {
-                mn = gpsMonth + 1;
-                d = 1;
-              }
-              else
-              {
-                d = gpsDay + 1;
-              }
-            }
-          } else
-          {
-            if(gpsDay == 31)
-            {
-              if(gpsMonth == 12)
-              {
-                y = gpsYear + 1;
-                mn = 1;
-                d = 1;
-              } else
-              {
-                mn = gpsMonth + 1;
-                d = 1;
-              }
-            } else
-            {
-              d = gpsDay + 1;
-            }
-          }       
-        }
-
-        
-        tft.setCursor(110, 180);
-        tft.print(d);
-        tft.print("/");
-        tft.print(mn);
-        tft.print("/");
-        tft.print(y);
-        tft.setCursor(110, 200);
-        if(h < 10)
-        {
-          tft.print("0");
-        }
-        tft.print(h);
-        tft.print(":");
-        if(gpsMinute < 10)
-        {
-          tft.print("0");
-        }
-        tft.print(gpsMinute);
-        tft.print(":");
-        if(gpsSecond < 10)
-        {
-          tft.print("0");
-        }
-        tft.print(gpsSecond);
-        tft.print(" UTC");
-        if(eeprom.settings.utcOffset < 0)
-        {
-          tft.print("-");
-        } else
-        {
-          tft.print("+");
-        }
-        tft.print(eeprom.settings.utcOffset);
-        
-        lastTime = (gpsHour*100*100)+(gpsMinute*100)+(gpsSecond);
-        lastDate = (gpsYear*100*100)+(gpsMonth*100)+(gpsDay);
-      }
     }
         
-  }else if(mode == 4) { //this is settings
+  }else if(mode == 4) //Settings Menu
+  {
     EEPROM.get(0,eeprom);
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[1] > 60 && touchPoint[1] < 110){
@@ -538,18 +368,22 @@ void loop()
         
     } 
         
-  } else if(mode == 5) {
+  } else if(mode == 5) //SOS
+  {
       SendMessage(5);    
-  } else if(mode == 6) {
+  } else if(mode == 6) // expand message
+  {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] < 50 && touchPoint[1] < 50){
         customMessages();
       }
     }
     
-  } else if(mode == 7) {
+  } else if(mode == 7) //Sleep
+  {
     
-  } else if(mode == 8) {
+  } else if(mode == 8) //Type custom message
+  {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] < 50 && touchPoint[1] < 50){
         customMessages();
@@ -579,7 +413,8 @@ void loop()
       }
     }
     
-  } else if(mode == 9) {
+  } else if(mode == 9) //Chose message to predefine
+  {
     EEPROM.get(0,eeprom);
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] > 160 && touchPoint[1] > 145){
@@ -599,7 +434,7 @@ void loop()
       }
     }
     
-  }else if(mode == 10)
+  }else if(mode == 10) //Set Predefined Messages
   {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] < 50 && touchPoint[1] < 50){
@@ -649,7 +484,7 @@ void loop()
         
       }
     }
-  } else if(mode == 11)
+  } else if(mode == 11) //Set Recipient
   {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] < 50 && touchPoint[1] < 50){
@@ -682,47 +517,91 @@ void loop()
       }
     }
     
-  } else if(mode == 12)
+  } else if(mode == 12) //Clock Settings
   {
     EEPROM.get(0,eeprom);
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[1] > 60 && touchPoint[1] < 110){
-        if(eeprom.settings.militaryTime == true){
-          eeprom.settings.militaryTime = false;
-          EEPROM.put(0,eeprom);
-          drawTime();
-          tft.fillRect(285,65,20,20,ILI9341_CYAN);
-          delay(300);
-        } else if (eeprom.settings.militaryTime == false){
-          eeprom.settings.militaryTime = true;
-          EEPROM.put(0,eeprom);
-          drawTime();
-          tft.fillRect(285,65,20,20,ILI9341_BLACK);
-          delay(300);
-        }       
-      }else if(touchPoint[1] > 110 && touchPoint[1] < 160){
-        timeSettings();        
-      }else if(touchPoint[1] > 165 && touchPoint[1] < 185){
-        dateSettings();
-      }else if(touchPoint[1] > 190 && touchPoint[1] < 230){
-        if(touchPoint[0] > 240 && eeprom.settings.utcOffset < 14){
-          eeprom.settings.utcOffset = eeprom.settings.utcOffset + 1;
+        if(touchPoint[0] > 240 && eeprom.settings.currentOffset < 37){
+          eeprom.settings.currentOffset++;
+          eeprom.settings.utcOffset = timezones[eeprom.settings.currentOffset];
           EEPROM.put(0,eeprom);
           delay(200);
-        }else if (touchPoint[0] < 70 && eeprom.settings.utcOffset > -12){
-          eeprom.settings.utcOffset = eeprom.settings.utcOffset - 1;
+        }else if (touchPoint[0] < 70 && eeprom.settings.currentOffset > 0){
+          eeprom.settings.currentOffset--;
+          eeprom.settings.utcOffset = timezones[eeprom.settings.currentOffset];
           EEPROM.put(0,eeprom);
           delay(200);
         }
-        tft.fillRect(210,190,69,40, ILI9341_BLACK);
+        tft.fillRect(170,55,109,40, ILI9341_BLACK);
         tft.setTextColor(ILI9341_WHITE);  
         tft.setTextSize(3);
-        tft.setCursor(210,195);
+        tft.setCursor(170,60);
         if(eeprom.settings.utcOffset > 0)
         {
           tft.print("+");
         }
-        tft.println(eeprom.settings.utcOffset);
+        if(ceilf(eeprom.settings.utcOffset) == eeprom.settings.utcOffset)
+        {
+          tft.print((int)eeprom.settings.utcOffset);
+          tft.print(":");
+          tft.print("00");
+        } else if((eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == 0.5 || (eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == -0.5)
+        {
+          tft.print((int)eeprom.settings.utcOffset);
+          tft.print(":");
+          tft.print("30");
+        } else if((eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == 0.75 || (eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == -0.75)
+        {
+          tft.print((int)eeprom.settings.utcOffset);
+          tft.print(":");
+          tft.print("45");
+        }       
+      }else if(touchPoint[1] > 110 && touchPoint[1] < 160){
+        if(eeprom.settings.gpsTime == true){
+          eeprom.settings.gpsTime = false;
+
+          tft.fillRect(5,145,310,40, ILI9341_BLACK);
+          tft.setCursor(10,150);
+          tft.setTextColor(ILI9341_WHITE);  
+          tft.setTextSize(3);
+          tft.println("Set Time");
+
+          tft.fillRect(5,190,310,40, ILI9341_BLACK);
+          tft.setCursor(10,195);
+          tft.setTextColor(ILI9341_WHITE);  
+          tft.setTextSize(3);
+          tft.println("Set Date");
+          
+          EEPROM.put(0,eeprom);
+          drawTime();
+          tft.fillRect(285,110,20,20,ILI9341_CYAN);
+          delay(300);
+        } else if (eeprom.settings.gpsTime == false){
+          eeprom.settings.gpsTime = true;
+          
+          tft.fillRect(5,145,310,40, 0x8410);
+          tft.setCursor(10,150);
+          tft.setTextColor(ILI9341_WHITE);  
+          tft.setTextSize(3);
+          tft.println("Set Time");
+
+          tft.fillRect(5,190,310,40, 0x8410);
+          tft.setCursor(10,195);
+          tft.setTextColor(ILI9341_WHITE);  
+          tft.setTextSize(3);
+          tft.println("Set Date");
+          
+          EEPROM.put(0,eeprom);
+          drawTime();
+          tft.fillRect(285,110,20,20,ILI9341_BLACK);
+          delay(300);
+        }          
+      }else if(touchPoint[1] > 165 && touchPoint[1] < 185 && !eeprom.settings.gpsTime){
+        timeSettings();
+        
+      }else if(touchPoint[1] > 190 && touchPoint[1] < 230 && !eeprom.settings.gpsTime){
+        dateSettings();
       }else if(touchPoint[0] < 50 && touchPoint[1] < 50){
         //before going to menu, we write everything back into eeprom for next time
         EEPROM.put(0,eeprom);
@@ -730,7 +609,7 @@ void loop()
       }
         
     }
-  } else if(mode == 13)
+  } else if(mode == 13) //Time Settings
   {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[1] > 60 && touchPoint[1] < 110){  
@@ -775,12 +654,26 @@ void loop()
         tft.setCursor(220,150);
         tft.println(rtc.getSecond());
         drawTime();
+      }else if(touchPoint[1] > 190 && touchPoint[1] < 230){
+        if(eeprom.settings.militaryTime == true){
+          eeprom.settings.militaryTime = false;
+          EEPROM.put(0,eeprom);
+          drawTime();
+          tft.fillRect(285,200,20,20,ILI9341_CYAN);
+          delay(300);
+        } else if (eeprom.settings.militaryTime == false){
+          eeprom.settings.militaryTime = true;
+          EEPROM.put(0,eeprom);
+          drawTime();
+          tft.fillRect(285,200,20,20,ILI9341_BLACK);
+          delay(300);
+        }
       }else if(touchPoint[0] < 50 && touchPoint[1] < 50){
         clockSettings();
       }
         
     }
-  } else if(mode == 14)
+  } else if(mode == 14) //Date Settings
   {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[1] > 60 && touchPoint[1] < 110){  
@@ -1127,6 +1020,11 @@ void coordinates(){
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   drawBack();
   drawTime();  
+  tft.fillRect(100,100,200,120,ILI9341_BLACK);
+  tft.setCursor(110, 100);
+  tft.setTextColor(ILI9341_WHITE);
+  tft.setTextSize(2);
+  tft.print("No GPS Signal");
 }
 
 void settings(){
@@ -1189,48 +1087,75 @@ void clockSettings()
   drawBack();
   tft.fillRect(0,50,320,240, ILI9341_CYAN);
 
-  //checkbox for 24 hour time
+  //utc offset
   tft.fillRect(5,55,310,40, ILI9341_BLACK);
-  tft.setCursor(10,60);
+  tft.setCursor(50,60);
   tft.setTextColor(ILI9341_WHITE);  
   tft.setTextSize(3);
-  tft.println("24 Hour Clock");
+  tft.println("UTC: ");
+  tft.setCursor(170,60);
+  if(eeprom.settings.utcOffset > 0)
+  {
+    tft.print("+");
+  }
+  if(ceilf(eeprom.settings.utcOffset) == eeprom.settings.utcOffset)
+  {
+    tft.print((int)eeprom.settings.utcOffset);
+    tft.print(":");
+    tft.print("00");
+  } else if((eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == 0.5 || (eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == -0.5)
+  {
+    tft.print((int)eeprom.settings.utcOffset);
+    tft.print(":");
+    tft.print("30");
+  } else if((eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == 0.75 || (eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == -0.75)
+  {
+    tft.print((int)eeprom.settings.utcOffset);
+    tft.print(":");
+    tft.print("45");
+  }
+  tft.fillRect(10,60,30,30,ILI9341_CYAN);
+  tft.fillTriangle(15,75,30,65,30,85, ILI9341_BLACK);
   tft.fillRect(280,60,30,30,ILI9341_CYAN);
-  if(eeprom.settings.militaryTime == true){
-    tft.fillRect(285,65,20,20,ILI9341_BLACK);
+  tft.fillTriangle(305,75,290,65,290,85, ILI9341_BLACK);
+
+  //checkbox for GPS Time
+  tft.fillRect(5,100,310,40, ILI9341_BLACK);
+  tft.setCursor(10,105);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
+  tft.println("Use GPS Time");
+  tft.fillRect(280,105,30,30,ILI9341_CYAN);
+  if(eeprom.settings.gpsTime == true){
+    tft.fillRect(285,110,20,20,ILI9341_BLACK);
   }
 
   //Time
-  tft.fillRect(5,100,310,40, ILI9341_BLACK);
-  tft.setCursor(10,105);
+  if(!eeprom.settings.gpsTime)
+  {
+    tft.fillRect(5,145,310,40, ILI9341_BLACK);
+  } else
+  {
+    tft.fillRect(5,145,310,40, 0x8410);
+  }
+  tft.setCursor(10,150);
   tft.setTextColor(ILI9341_WHITE);  
   tft.setTextSize(3);
   tft.println("Set Time");
 
   //Date
-  tft.fillRect(5,145,310,40, ILI9341_BLACK);
-  tft.setCursor(10,150);
+  if(!eeprom.settings.gpsTime)
+  {
+    tft.fillRect(5,190,310,40, ILI9341_BLACK);
+  } else
+  {
+    tft.fillRect(5,190,310,40, 0x8410);
+  }
+  tft.setCursor(10,195);
   tft.setTextColor(ILI9341_WHITE);  
   tft.setTextSize(3);
   tft.println("Set Date");
-
-  //utc offset
-  tft.fillRect(5,190,310,40, ILI9341_BLACK);
-  tft.setCursor(50,195);
-  tft.setTextColor(ILI9341_WHITE);  
-  tft.setTextSize(3);
-  tft.println("UTC: ");
-  tft.setCursor(210,195);
-  if(eeprom.settings.utcOffset > 0)
-  {
-    tft.print("+");
-  }
-  tft.println(eeprom.settings.utcOffset);
-  tft.fillRect(10,195,30,30,ILI9341_CYAN);
-  tft.fillTriangle(15,210,30,200,30,220, ILI9341_BLACK);
-  tft.fillRect(280,195,30,30,ILI9341_CYAN);
-  tft.fillTriangle(305,210,290,200,290,220, ILI9341_BLACK);
-
+  
   drawTime();
   EEPROM.put(0,eeprom);
 }
@@ -1282,6 +1207,17 @@ void timeSettings()
   tft.fillTriangle(15,165,30,155,30,175, ILI9341_BLACK);
   tft.fillRect(280,150,30,30,ILI9341_CYAN);
   tft.fillTriangle(305,165,290,155,290,175, ILI9341_BLACK);  
+
+  //checkbox for 24 hour time
+  tft.fillRect(5,190,310,40, ILI9341_BLACK);
+  tft.setCursor(10,195);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
+  tft.println("24 Hour Clock");
+  tft.fillRect(280,195,30,30,ILI9341_CYAN);
+  if(eeprom.settings.militaryTime == true){
+    tft.fillRect(285,200,20,20,ILI9341_BLACK);
+  }
 
   drawTime();
 }
@@ -1459,6 +1395,252 @@ void Zero(char * str, int len)
   }
 }
 
+void GetGpsTime()
+{
+  if((gpsHour*100*100)+(gpsMinute*100)+(gpsSecond) > lastTime || (gpsYear*100*100)+(gpsMonth*100)+(gpsDay) > lastDate)
+      {
+        if(mode == 3)
+        {
+          tft.fillRect(100,100,200,120,ILI9341_BLACK);
+          tft.setCursor(110, 100);
+          tft.print("Lat: ");
+          tft.print(lat);
+          tft.setCursor(110, 120);
+          tft.print("Long: ");
+          tft.println(lon);
+          tft.setCursor(110, 140);
+          tft.print(gpsDay);
+          tft.print("/");
+          tft.print(gpsMonth);
+          tft.print("/");
+          tft.print(gpsYear);
+          tft.setCursor(110, 160);
+          if(gpsHour < 10)
+          {
+            tft.print("0");
+          }
+          tft.print(gpsHour);
+          tft.print(":");
+          if(gpsMinute < 10)
+          {
+            tft.print("0");
+          }
+          tft.print(gpsMinute);
+          tft.print(":");
+          if(gpsSecond < 10)
+          {
+            tft.print("0");
+          }
+          tft.print(gpsSecond);
+          tft.println(" UTC");
+        }
+        int h,m,y,mn,d;
+        //calculate UTC OFFSET
+        int offset = (int)eeprom.settings.utcOffset;
+          h = gpsHour + offset;
+        if((eeprom.settings.utcOffset - offset) == 0.5)
+        {
+          m = gpsMinute + 30;
+          if(m > 59)
+          {
+            m = m - 60;
+            h = h + 1;
+          }
+        } else if((eeprom.settings.utcOffset - offset) == -0.5)
+        {
+          m = gpsMinute - 30;
+          if(m < 0)
+          {
+            m = m + 60;
+            h = h - 1;
+          }
+        } else if((eeprom.settings.utcOffset - offset) == 0.75)
+        {
+          m = gpsMinute + 45;
+          if(m > 59)
+          {
+            m = m - 60;
+            h = h + 1;
+          }
+        } else if((eeprom.settings.utcOffset - offset) == -0.75)
+        {
+          m = gpsMinute - 45;
+          if(m < 0)
+          {
+            m = m + 60;
+            h = h - 1;
+          }
+        } else
+        {
+          m = gpsMinute;
+        }
+        if(h >= 0 && h < 24)
+        {
+          y = gpsYear;
+          mn = gpsMonth;
+          d = gpsDay;
+        } else if(h < 0)  //Go back a day
+        {
+          h = h + 24;
+          if(gpsDay == 1)
+          {
+            if(gpsMonth == 1)
+            {
+              mn = 12;
+              d = 31;
+              y = gpsYear - 1;
+            } else if(gpsMonth == 5 || gpsMonth == 7 || gpsMonth == 10 || gpsMonth == 12)
+            {
+              mn = gpsMonth -1;
+              d = 30;
+            } else if(gpsMonth == 3)
+            {
+              mn = gpsMonth - 1;
+              if(((gpsYear % 4) == 0))
+              {
+                d = 29;
+              } else
+              {
+                d = 28;
+              }
+            } else
+            {
+              mn = gpsMonth - 1;
+              d = 31;
+            }
+          } else
+          {
+            d = gpsDay - 1;
+          }
+          
+        } else if(h >= 24)
+        {
+          h = h - 24;
+          if(gpsMonth == 4 || gpsMonth == 6 || gpsMonth == 9 || gpsMonth == 11)
+          {
+            if(gpsDay == 30)
+            {
+              d = 1;
+              mn = gpsMonth + 1;
+            }
+            else
+            {
+              d = gpsDay + 1;
+            }
+          } else if(gpsMonth == 2)
+          {
+            if(((gpsYear % 4) == 0))
+            {
+              if(gpsDay == 29)
+              {
+                mn = gpsMonth + 1;
+                d = 1;
+              }
+              else
+              {
+                d = gpsDay + 1;
+              }
+            } else
+            {
+              if(gpsDay == 28)
+              {
+                mn = gpsMonth + 1;
+                d = 1;
+              }
+              else
+              {
+                d = gpsDay + 1;
+              }
+            }
+          } else
+          {
+            if(gpsDay == 31)
+            {
+              if(gpsMonth == 12)
+              {
+                y = gpsYear + 1;
+                mn = 1;
+                d = 1;
+              } else
+              {
+                mn = gpsMonth + 1;
+                d = 1;
+              }
+            } else
+            {
+              d = gpsDay + 1;
+            }
+          }       
+        }
+        if(mode == 3)
+        {
+          tft.setCursor(110, 180);
+          tft.print(d);
+          tft.print("/");
+          tft.print(mn);
+          tft.print("/");
+          tft.print(y);
+          tft.setCursor(110, 200);
+          if(h < 10)
+          {
+            tft.print("0");
+          }
+          tft.print(h);
+          tft.print(":");
+          if(m < 10)
+          {
+            tft.print("0");
+          }
+          tft.print(m);
+          tft.print(":");
+          if(gpsSecond < 10)
+          {
+            tft.print("0");
+          }
+          tft.print(gpsSecond);
+          tft.print(" UTC");
+          if(offset > 0)
+          {
+            tft.print("+");
+          }
+          if(ceilf(eeprom.settings.utcOffset) == eeprom.settings.utcOffset)
+          {
+            tft.print((int)eeprom.settings.utcOffset);
+            tft.print(":");
+            tft.print("00");
+          } else if((eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == 0.5 || (eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == -0.5)
+          {
+            tft.print((int)eeprom.settings.utcOffset);
+            tft.print(":");
+            tft.print("30");
+          } else if((eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == 0.75 || (eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == -0.75)
+          {
+            tft.print((int)eeprom.settings.utcOffset);
+            tft.print(":");
+            tft.print("45");
+          }
+        }
+        
+        if(eeprom.settings.gpsTime)
+        {
+          int oldH = rtc.getHour();
+          int oldM = rtc.getMinute();          
+          rtc.setHour(h);
+          rtc.setMinute(m);
+          rtc.setSecond(gpsSecond);
+          rtc.setDate(d);
+          rtc.setMonth(mn);
+          rtc.setYear(y-2000);
+          if(oldH != h || oldM != m)
+          {
+            drawTime();
+          }
+        }
+        lastTime = (gpsHour*100*100)+(gpsMinute*100)+(gpsSecond);
+        lastDate = (gpsYear*100*100)+(gpsMonth*100)+(gpsDay);
+      }
+}
+
 
 void SetupEeprom()
 {
@@ -1471,6 +1653,7 @@ void SetupEeprom()
   eeprom.settings.militaryTime = false;
   strcpy(eeprom.settings.recipient, "+61432123456");
   eeprom.settings.utcOffset = 8;
+  eeprom.settings.gpsTime = false;
 
   strcpy(eeprom.outbox.recipient,"+61400000000");
   eeprom.outbox.coords.dateTime.year = 10 ;
