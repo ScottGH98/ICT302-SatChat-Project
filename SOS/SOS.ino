@@ -80,8 +80,12 @@ struct Settings
 {
   char predefinedMessages[4][200];
   short breadInterval;
+  int currentInterval;
   bool militaryTime;
   char recipient[15];
+  float utcOffset;
+  short currentOffset;
+  bool gpsTime;
 };
 struct Eeprom
 {
@@ -100,6 +104,9 @@ int preNum = 0;
 int incomingByte;
 int lastTime = 0;
 int lastDate = 0;
+int breadCount = 0;
+int intervalMins[] = {0,1,2,5,10,15,30,60,120,180,240,300,360,720};
+float timezones[] = {-12,-11,-10,-9.5,-9,-8,-7,-6,-5,-4,-3.5,-3,-2,-1,0,1,2,3,3.5,4,4.5,5,5.5,5.75,6,6.5,7,8,8.75,9,9.5,10,10.5,11,12,12.75,13,14};
 
 byte factorySettings;
 
@@ -137,6 +144,8 @@ void setup(void) {
   rtc.update();
   rtc.enableAlarmInterrupt();
   rtc.setAlarm1(0);
+  rtc.enableAlarmInterrupt();
+  rtc.setAlarm2(rtc.minute() + 1);
   //rtc.setTime(0, 40, 2, 5, 26, 9, 19);
   
 
@@ -199,8 +208,10 @@ void loop()
       gps.f_get_position(&lat,&lon);
     }
   }
+  GetGpsTime();
  
-  if(mode == 0) {
+  if(mode == 0) //Main Menu
+  {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] > 160 && touchPoint[1] > 145){ //cyan
         settings();
@@ -213,7 +224,8 @@ void loop()
       }
     }
     
-  }else if(mode == 1) {
+  }else if(mode == 1) //Predefined Messages
+  {
     EEPROM.get(0,eeprom);
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] > 160 && touchPoint[1] > 145){
@@ -236,7 +248,8 @@ void loop()
       }
     }
     
-  }else if(mode == 2) {
+  }else if(mode == 2) //Custom Messages
+  {
     EEPROM.get(0,eeprom);
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[1] > 145){
@@ -303,7 +316,8 @@ void loop()
         
     }
         
-  }else if(mode == 3) {
+  }else if(mode == 3) //GPS Coordinates
+  {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){        
       if(touchPoint[0] < 50 && touchPoint[1] < 50){
         mainMenu();
@@ -317,72 +331,34 @@ void loop()
       tft.println("Bearing:");
       tft.setCursor(130, 75);
       drawBearing();
-      
-      if((gpsHour*100*100)+(gpsMinute*100)+(gpsSecond) > lastTime || (gpsYear*100*100)+(gpsMonth*100)+(gpsDay) > lastDate)
-      {
-        tft.fillRect(100,100,200,100,ILI9341_BLACK);
-        //gps.f_get_position(&lat,&lon);
-        tft.setCursor(110, 100);
-        tft.print("Lat: ");
-        tft.print(lat);
-        tft.setCursor(110, 120);
-        tft.print("Long: ");
-        tft.println(lon);
-        //gps.crack_datetime(&gpsYear, &gpsMonth, &gpsDay, &gpsHour, 
-        //  &gpsMinute, &gpsSecond, &gpsHundredth, &fix_age);
-        tft.setCursor(110, 140);
-        tft.print(gpsDay);
-        tft.print("/");
-        tft.print(gpsMonth);
-        tft.print("/");
-        tft.print(gpsYear);
-        tft.setCursor(110, 160);
-        tft.print(gpsHour);
-        tft.print(":");
-        tft.print(gpsMinute);
-        tft.print(":");
-        tft.print(gpsSecond);
-        tft.print(" UTC");
-        lastTime = (gpsHour*100*100)+(gpsMinute*100)+(gpsSecond);
-        lastDate = (gpsYear*100*100)+(gpsMonth*100)+(gpsDay);
-      }
     }
         
-  }else if(mode == 4) { //this is settings
+  }else if(mode == 4) //Settings Menu
+  {
     EEPROM.get(0,eeprom);
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[1] > 60 && touchPoint[1] < 110){
         TypeNum();        
       }else if(touchPoint[1] > 110 && touchPoint[1] < 160){
-        if(eeprom.settings.militaryTime == true){
-          eeprom.settings.militaryTime = false;
-          EEPROM.put(0,eeprom);
-          drawTime();
-          tft.fillRect(285,110,20,20,ILI9341_CYAN);
-          delay(300);
-        } else if (eeprom.settings.militaryTime == false){
-          eeprom.settings.militaryTime = true;
-          EEPROM.put(0,eeprom);
-          drawTime();
-          tft.fillRect(285,110,20,20,ILI9341_BLACK);
-          delay(300);
-        }
+        clockSettings();
       }else if(touchPoint[1] > 165 && touchPoint[1] < 185){
         setPresetMessages();
       }else if(touchPoint[1] > 190 && touchPoint[1] < 230){
-        if(touchPoint[0] > 240 && eeprom.settings.breadInterval < 15){
-          eeprom.settings.breadInterval = eeprom.settings.breadInterval + 1;
+        if(touchPoint[0] > 240 && eeprom.settings.currentInterval < 13){
+          eeprom.settings.currentInterval++;
+          eeprom.settings.breadInterval = intervalMins[eeprom.settings.currentInterval];
           EEPROM.put(0,eeprom);
           delay(200);
-        }else if (touchPoint[0] < 70 && eeprom.settings.breadInterval > 0){
-          eeprom.settings.breadInterval = eeprom.settings.breadInterval - 1;
+        }else if (touchPoint[0] < 70 && eeprom.settings.currentInterval > 0){
+          eeprom.settings.currentInterval--;
+          eeprom.settings.breadInterval = intervalMins[eeprom.settings.currentInterval];
           EEPROM.put(0,eeprom);
           delay(200);
         }
-        tft.fillRect(230,190,49,40, ILI9341_BLACK);
+        tft.fillRect(220,190,59,40, ILI9341_BLACK);
         tft.setTextColor(ILI9341_WHITE);  
         tft.setTextSize(3);
-        tft.setCursor(230,195);
+        tft.setCursor(220,195);
         tft.println(eeprom.settings.breadInterval);
       }else if(touchPoint[0] < 50 && touchPoint[1] < 50){
         //before going to menu, we write everything back into eeprom for next time
@@ -392,18 +368,22 @@ void loop()
         
     } 
         
-  } else if(mode == 5) {
+  } else if(mode == 5) //SOS
+  {
       SendMessage(5);    
-  } else if(mode == 6) {
+  } else if(mode == 6) // expand message
+  {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] < 50 && touchPoint[1] < 50){
         customMessages();
       }
     }
     
-  } else if(mode == 7) {
+  } else if(mode == 7) //Sleep
+  {
     
-  } else if(mode == 8) {
+  } else if(mode == 8) //Type custom message
+  {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] < 50 && touchPoint[1] < 50){
         customMessages();
@@ -433,7 +413,8 @@ void loop()
       }
     }
     
-  } else if(mode == 9) {
+  } else if(mode == 9) //Chose message to predefine
+  {
     EEPROM.get(0,eeprom);
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] > 160 && touchPoint[1] > 145){
@@ -453,7 +434,7 @@ void loop()
       }
     }
     
-  }else if(mode == 10)
+  }else if(mode == 10) //Set Predefined Messages
   {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] < 50 && touchPoint[1] < 50){
@@ -503,7 +484,7 @@ void loop()
         
       }
     }
-  } else if(mode == 11)
+  } else if(mode == 11) //Set Recipient
   {
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] < 50 && touchPoint[1] < 50){
@@ -536,34 +517,233 @@ void loop()
       }
     }
     
+  } else if(mode == 12) //Clock Settings
+  {
+    EEPROM.get(0,eeprom);
+    if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
+      if(touchPoint[1] > 60 && touchPoint[1] < 110){
+        if(touchPoint[0] > 240 && eeprom.settings.currentOffset < 37){
+          eeprom.settings.currentOffset++;
+          eeprom.settings.utcOffset = timezones[eeprom.settings.currentOffset];
+          EEPROM.put(0,eeprom);
+          delay(200);
+        }else if (touchPoint[0] < 70 && eeprom.settings.currentOffset > 0){
+          eeprom.settings.currentOffset--;
+          eeprom.settings.utcOffset = timezones[eeprom.settings.currentOffset];
+          EEPROM.put(0,eeprom);
+          delay(200);
+        }
+        tft.fillRect(170,55,109,40, ILI9341_BLACK);
+        tft.setTextColor(ILI9341_WHITE);  
+        tft.setTextSize(3);
+        tft.setCursor(170,60);
+        if(eeprom.settings.utcOffset > 0)
+        {
+          tft.print("+");
+        }
+        if(ceilf(eeprom.settings.utcOffset) == eeprom.settings.utcOffset)
+        {
+          tft.print((int)eeprom.settings.utcOffset);
+          tft.print(":");
+          tft.print("00");
+        } else if((eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == 0.5 || (eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == -0.5)
+        {
+          tft.print((int)eeprom.settings.utcOffset);
+          tft.print(":");
+          tft.print("30");
+        } else if((eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == 0.75 || (eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == -0.75)
+        {
+          tft.print((int)eeprom.settings.utcOffset);
+          tft.print(":");
+          tft.print("45");
+        }       
+      }else if(touchPoint[1] > 110 && touchPoint[1] < 160){
+        if(eeprom.settings.gpsTime == true){
+          eeprom.settings.gpsTime = false;
+          
+          tft.fillRect(5,190,310,40, ILI9341_BLACK);
+          tft.setCursor(10,195);
+          tft.setTextColor(ILI9341_WHITE);  
+          tft.setTextSize(3);
+          tft.println("Set Date");
+          
+          EEPROM.put(0,eeprom);
+          drawTime();
+          tft.fillRect(285,110,20,20,ILI9341_CYAN);
+          delay(300);
+        } else if (eeprom.settings.gpsTime == false){
+          eeprom.settings.gpsTime = true;
+
+          tft.fillRect(5,190,310,40, 0x8410);
+          tft.setCursor(10,195);
+          tft.setTextColor(ILI9341_WHITE);  
+          tft.setTextSize(3);
+          tft.println("Set Date");
+          
+          EEPROM.put(0,eeprom);
+          drawTime();
+          tft.fillRect(285,110,20,20,ILI9341_BLACK);
+          delay(300);
+        }          
+      }else if(touchPoint[1] > 165 && touchPoint[1] < 185){
+        timeSettings();
+        
+      }else if(touchPoint[1] > 190 && touchPoint[1] < 230 && !eeprom.settings.gpsTime){
+        dateSettings();
+      }else if(touchPoint[0] < 50 && touchPoint[1] < 50){
+        //before going to menu, we write everything back into eeprom for next time
+        EEPROM.put(0,eeprom);
+        settings();
+      }
+        
+    }
+  } else if(mode == 13) //Time Settings
+  {
+    if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
+      if(touchPoint[1] > 60 && touchPoint[1] < 110 && !eeprom.settings.gpsTime){  
+          if(touchPoint[0] > 240 && rtc.getHour() < 23){
+          rtc.setHour(rtc.getHour() + 1);
+          delay(200);
+        }else if (touchPoint[0] < 70 && rtc.getHour() > 0){
+          rtc.setHour(rtc.getHour() - 1);
+          delay(200);
+        }
+        tft.fillRect(220,55,49,40, ILI9341_BLACK);
+        tft.setTextColor(ILI9341_WHITE);  
+        tft.setTextSize(3);
+        tft.setCursor(220,60);
+        tft.print(rtc.getHour());
+        drawTime();
+      }else if(touchPoint[1] > 110 && touchPoint[1] < 160 && !eeprom.settings.gpsTime){
+        if(touchPoint[0] > 240 && rtc.getMinute() < 59){
+          rtc.setMinute(rtc.getMinute() + 1);
+          delay(200);
+        }else if (touchPoint[0] < 70 && rtc.getMinute() > 0){
+          rtc.setMinute(rtc.getMinute() - 1);
+          delay(200);
+        }
+        tft.fillRect(220,100,49,40, ILI9341_BLACK);
+        tft.setTextColor(ILI9341_WHITE);  
+        tft.setTextSize(3);
+        tft.setCursor(220,105);
+        tft.println(rtc.getMinute());   
+        drawTime();  
+      }else if(touchPoint[1] > 165 && touchPoint[1] < 185 && !eeprom.settings.gpsTime){
+        if(touchPoint[0] > 240 && rtc.getSecond() < 59){
+          rtc.setSecond(rtc.getSecond() + 1);
+          delay(200);
+        }else if (touchPoint[0] < 70 && rtc.getSecond() > 0){
+          rtc.setSecond(rtc.getSecond() - 1);
+          delay(200);
+        }
+        tft.fillRect(220,145,49,40, ILI9341_BLACK);
+        tft.setTextColor(ILI9341_WHITE);  
+        tft.setTextSize(3);
+        tft.setCursor(220,150);
+        tft.println(rtc.getSecond());
+        drawTime();
+      }else if(touchPoint[1] > 190 && touchPoint[1] < 230){
+        if(eeprom.settings.militaryTime == true){
+          eeprom.settings.militaryTime = false;
+          EEPROM.put(0,eeprom);
+          drawTime();
+          tft.fillRect(285,200,20,20,ILI9341_CYAN);
+          delay(300);
+        } else if (eeprom.settings.militaryTime == false){
+          eeprom.settings.militaryTime = true;
+          EEPROM.put(0,eeprom);
+          drawTime();
+          tft.fillRect(285,200,20,20,ILI9341_BLACK);
+          delay(300);
+        }
+      }else if(touchPoint[0] < 50 && touchPoint[1] < 50){
+        clockSettings();
+      }
+        
+    }
+  } else if(mode == 14) //Date Settings
+  {
+    if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
+      if(touchPoint[1] > 60 && touchPoint[1] < 110){  
+          if(touchPoint[0] > 240 && rtc.getYear() < 23){
+          rtc.setYear(rtc.getYear() + 1);
+          delay(200);
+        }else if (touchPoint[0] < 70 && rtc.getYear() > 0){
+          rtc.setYear(rtc.getYear() - 1);
+          delay(200);
+        }
+        tft.fillRect(220,55,49,40, ILI9341_BLACK);
+        tft.setTextColor(ILI9341_WHITE);  
+        tft.setTextSize(3);
+        tft.setCursor(220,60);
+        tft.print(rtc.getYear());
+      }else if(touchPoint[1] > 110 && touchPoint[1] < 160){
+        if(touchPoint[0] > 240 && rtc.getMonth() < 59){
+          rtc.setMonth(rtc.getMonth() + 1);
+          delay(200);
+        }else if (touchPoint[0] < 70 && rtc.getMonth() > 0){
+          rtc.setMonth(rtc.getMonth() - 1);
+          delay(200);
+        }
+        tft.fillRect(220,100,49,40, ILI9341_BLACK);
+        tft.setTextColor(ILI9341_WHITE);  
+        tft.setTextSize(3);
+        tft.setCursor(220,105);
+        tft.println(rtc.getMonth());   
+      }else if(touchPoint[1] > 165 && touchPoint[1] < 185){
+        if(touchPoint[0] > 240 && rtc.getDate() < 59){
+          rtc.setDate(rtc.getDate() + 1);
+          delay(200);
+        }else if (touchPoint[0] < 70 && rtc.getDate() > 0){
+          rtc.setDate(rtc.getDate() - 1);
+          delay(200);
+        }
+        tft.fillRect(220,145,49,40, ILI9341_BLACK);
+        tft.setTextColor(ILI9341_WHITE);  
+        tft.setTextSize(3);
+        tft.setCursor(220,150);
+        tft.println(rtc.getDate());
+      }else if(touchPoint[0] < 50 && touchPoint[1] < 50){
+        clockSettings();
+      }
+        
+    }
   }
   
+  rtc.update();
   
-  if(mode != 7)
-  {
-  
-    rtc.update();
-    
-    #ifdef INTERRUPT_PIN
-      // Interrupt pin is active-low, if it's low, an alarm is triggered
-      if (!digitalRead(INTERRUPT_PIN))
+  #ifdef INTERRUPT_PIN
+    // Interrupt pin is active-low, if it's low, an alarm is triggered
+    if (!digitalRead(INTERRUPT_PIN))
+    {
+  #endif
+      // Check rtc.alarm1() to see if alarm 1 triggered the interrupt
+      if (rtc.alarm1())
       {
-    #endif
-        // Check rtc.alarm1() to see if alarm 1 triggered the interrupt
-        if (rtc.alarm1())
+        if(mode != 7)
         {
           drawTime();
-          rtc.setAlarm1(0);
         }
-        if (rtc.alarm2())
-        {
-          rtc.setAlarm2(rtc.minute() + 1, rtc.hour());
-        }
-    #ifdef INTERRUPT_PIN
+        rtc.setAlarm1(0);
       }
+      if (rtc.alarm2())
+      {
+        if(eeprom.settings.breadInterval != 0)
+        {
+          breadCount++;
+          if(breadCount == eeprom.settings.breadInterval)
+          {
+            Serial1.println("SBreadcrumb Sent.");
+            SendBread();
+            breadCount = 0;
+          }
+        }
+        rtc.setAlarm2(rtc.minute() + 1);
+      }
+  #ifdef INTERRUPT_PIN
+    }
     #endif
   
-  }
 }
 
 void textWrap(char * msg, int siz,int lin)
@@ -701,7 +881,7 @@ void textWrap3(char * msg)
 
 void presetMessages(){
   mode = 1;
-  Serial1.print("\nX\n");
+  Serial1.println("\nX\n");
   Serial1.println("SPre-set messages.");
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   drawBack();
@@ -726,7 +906,7 @@ void presetMessages(){
 void customMessages(){
   mode = 2;
   EEPROM.get(0,eeprom);
-  Serial1.print("\nX\n");
+  Serial1.println("\nX\n");
   Serial1.println("SCustom messages.");
   tft.fillScreen(ILI9341_BLACK);
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
@@ -749,10 +929,22 @@ void customMessages(){
   tft.print("Outbox ");
   tft.print(eeprom.outbox.recipient);
   tft.print("  ");
+  if(eeprom.outbox.coords.dateTime.hour < 10)
+  {
+    tft.print("0");
+  }
   tft.print(eeprom.outbox.coords.dateTime.hour);
   tft.print(":");
+  if(eeprom.outbox.coords.dateTime.minute < 10)
+  {
+    tft.print("0");
+  }
   tft.print(eeprom.outbox.coords.dateTime.minute);
   tft.print(":");
+  if(eeprom.outbox.coords.dateTime.second < 10)
+  {
+    tft.print("0");
+  }
   tft.print(eeprom.outbox.coords.dateTime.second);
   tft.print("  ");
   tft.print(eeprom.outbox.coords.dateTime.day);
@@ -776,10 +968,22 @@ void customMessages(){
   tft.print("Inbox ");
   tft.print(eeprom.inbox.sender);
   tft.print("  ");
+  if(eeprom.outbox.coords.dateTime.hour < 10)
+  {
+    tft.print("0");
+  }
   tft.print(eeprom.inbox.coords.dateTime.hour);
   tft.print(":");
+  if(eeprom.outbox.coords.dateTime.minute < 10)
+  {
+    tft.print("0");
+  }
   tft.print(eeprom.inbox.coords.dateTime.minute);
   tft.print(":");
+  if(eeprom.outbox.coords.dateTime.second < 10)
+  {
+    tft.print("0");
+  }
   tft.print(eeprom.inbox.coords.dateTime.second);
   tft.print("  ");
   tft.print(eeprom.inbox.coords.dateTime.day);
@@ -798,17 +1002,22 @@ void customMessages(){
 
 void coordinates(){
   mode = 3;
-  Serial1.print("\nX\n");
+  Serial1.println("\nX\n");
   Serial1.println("SViewing coordinates.");
   tft.fillScreen(ILI9341_BLACK);
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   drawBack();
   drawTime();  
+  tft.fillRect(100,100,200,120,ILI9341_BLACK);
+  tft.setCursor(110, 100);
+  tft.setTextColor(ILI9341_WHITE);
+  tft.setTextSize(2);
+  tft.print("No GPS Signal");
 }
 
 void settings(){
   mode = 4;
-  Serial1.print("\nX\n");
+  Serial1.println("\nX\n");
   Serial1.println("SSettings menu.");
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   drawBack();
@@ -821,16 +1030,14 @@ void settings(){
   tft.setTextSize(3);
   tft.println("Recipient");
 
-  //checkbox for 24 hour time
+  //clock settings
   tft.fillRect(5,100,310,40, ILI9341_BLACK);
   tft.setCursor(10,105);
   tft.setTextColor(ILI9341_WHITE);  
   tft.setTextSize(3);
-  tft.println("24 Hour Clock");
-  tft.fillRect(280,105,30,30,ILI9341_CYAN);
-  if(eeprom.settings.militaryTime == true){
-    tft.fillRect(285,110,20,20,ILI9341_BLACK);
-  }
+  tft.println("Clock Settings");
+  
+  
   //text editor
   tft.fillRect(5,145,310,40, ILI9341_BLACK);
   tft.setCursor(10,150);
@@ -842,9 +1049,12 @@ void settings(){
   tft.fillRect(5,190,310,40, ILI9341_BLACK);
   tft.setCursor(50,195);
   tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(2);
+  tft.print("Breadcrumbs");
+  tft.setCursor(50,212);
+  tft.print("Interval(min): "); 
+  tft.setCursor(220,195);
   tft.setTextSize(3);
-  tft.println("Interval: ");
-  tft.setCursor(230,195);
   tft.println(eeprom.settings.breadInterval);
   tft.fillRect(10,195,30,30,ILI9341_CYAN);
   tft.fillTriangle(15,210,30,200,30,220, ILI9341_BLACK);
@@ -856,9 +1066,216 @@ void settings(){
   EEPROM.put(0,eeprom);
 }
 
+void clockSettings()
+{
+  mode = 12;
+  Serial1.println("\nX\n");
+  Serial1.println("SClock Settings");
+  tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
+  drawBack();
+  tft.fillRect(0,50,320,240, ILI9341_CYAN);
+
+  //utc offset
+  tft.fillRect(5,55,310,40, ILI9341_BLACK);
+  tft.setCursor(50,60);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
+  tft.println("UTC: ");
+  tft.setCursor(170,60);
+  if(eeprom.settings.utcOffset > 0)
+  {
+    tft.print("+");
+  }
+  if(ceilf(eeprom.settings.utcOffset) == eeprom.settings.utcOffset)
+  {
+    tft.print((int)eeprom.settings.utcOffset);
+    tft.print(":");
+    tft.print("00");
+  } else if((eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == 0.5 || (eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == -0.5)
+  {
+    tft.print((int)eeprom.settings.utcOffset);
+    tft.print(":");
+    tft.print("30");
+  } else if((eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == 0.75 || (eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == -0.75)
+  {
+    tft.print((int)eeprom.settings.utcOffset);
+    tft.print(":");
+    tft.print("45");
+  }
+  tft.fillRect(10,60,30,30,ILI9341_CYAN);
+  tft.fillTriangle(15,75,30,65,30,85, ILI9341_BLACK);
+  tft.fillRect(280,60,30,30,ILI9341_CYAN);
+  tft.fillTriangle(305,75,290,65,290,85, ILI9341_BLACK);
+
+  //checkbox for GPS Time
+  tft.fillRect(5,100,310,40, ILI9341_BLACK);
+  tft.setCursor(10,105);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
+  tft.println("Use GPS Time");
+  tft.fillRect(280,105,30,30,ILI9341_CYAN);
+  if(eeprom.settings.gpsTime == true){
+    tft.fillRect(285,110,20,20,ILI9341_BLACK);
+  }
+
+  //Time
+  tft.fillRect(5,145,310,40, ILI9341_BLACK);
+  tft.setCursor(10,150);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
+  tft.println("Set Time");
+
+  //Date
+  if(!eeprom.settings.gpsTime)
+  {
+    tft.fillRect(5,190,310,40, ILI9341_BLACK);
+  } else
+  {
+    tft.fillRect(5,190,310,40, 0x8410);
+  }
+  tft.setCursor(10,195);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
+  tft.println("Set Date");
+  
+  drawTime();
+  EEPROM.put(0,eeprom);
+}
+
+void timeSettings()
+{
+  mode = 13;
+  Serial1.println("\nX\n");
+  Serial1.println("SSet Time");
+  tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
+  drawBack();
+  tft.fillRect(0,50,320,240, ILI9341_CYAN);
+
+  //Hour
+  if(!eeprom.settings.gpsTime)
+  {
+    tft.fillRect(5,55,310,40, ILI9341_BLACK);
+  } else
+  {
+    tft.fillRect(5,55,310,40, 0x8410);
+  }
+  tft.setCursor(50,60);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
+  tft.println("Hour: ");
+  tft.setCursor(230,60);
+  tft.println(rtc.getHour());
+  tft.fillRect(10,60,30,30,ILI9341_CYAN);
+  tft.fillTriangle(15,75,30,65,30,85, ILI9341_BLACK);
+  tft.fillRect(280,60,30,30,ILI9341_CYAN);
+  tft.fillTriangle(305,75,290,65,290,85, ILI9341_BLACK);
+
+  //Minute
+  if(!eeprom.settings.gpsTime)
+  {
+    tft.fillRect(5,100,310,40, ILI9341_BLACK);
+  } else
+  {
+    tft.fillRect(5,100,310,40, 0x8410);
+  }
+  tft.setCursor(50,105);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
+  tft.println("Minute: ");
+  tft.setCursor(230,105);
+  tft.println(rtc.getMinute());
+  tft.fillRect(10,105,30,30,ILI9341_CYAN);
+  tft.fillTriangle(15,120,30,110,30,130, ILI9341_BLACK);
+  tft.fillRect(280,105,30,30,ILI9341_CYAN);
+  tft.fillTriangle(305,120,290,110,290,130, ILI9341_BLACK);
+
+  //Second
+  if(!eeprom.settings.gpsTime)
+  {
+    tft.fillRect(5,145,310,40, ILI9341_BLACK);
+  } else
+  {
+    tft.fillRect(5,145,310,40, 0x8410);
+  }
+  tft.setCursor(50,150);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
+  tft.println("Second: ");
+  tft.setCursor(230,150);
+  tft.println(rtc.getSecond());
+  tft.fillRect(10,150,30,30,ILI9341_CYAN);
+  tft.fillTriangle(15,165,30,155,30,175, ILI9341_BLACK);
+  tft.fillRect(280,150,30,30,ILI9341_CYAN);
+  tft.fillTriangle(305,165,290,155,290,175, ILI9341_BLACK);  
+
+  //checkbox for 24 hour time
+  tft.fillRect(5,190,310,40, ILI9341_BLACK);
+  tft.setCursor(10,195);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
+  tft.println("24 Hour Clock");
+  tft.fillRect(280,195,30,30,ILI9341_CYAN);
+  if(eeprom.settings.militaryTime == true){
+    tft.fillRect(285,200,20,20,ILI9341_BLACK);
+  }
+
+  drawTime();
+}
+
+void dateSettings()
+{
+  mode = 14;
+  Serial1.println("\nX\n");
+  Serial1.println("SSet Date");
+  tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
+  drawBack();
+  tft.fillRect(0,50,320,240, ILI9341_CYAN);
+
+  //Year
+  tft.fillRect(5,55,310,40, ILI9341_BLACK);
+  tft.setCursor(50,60);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
+  tft.println("Year: ");
+  tft.setCursor(230,60);
+  tft.println(rtc.getYear());
+  tft.fillRect(10,60,30,30,ILI9341_CYAN);
+  tft.fillTriangle(15,75,30,65,30,85, ILI9341_BLACK);
+  tft.fillRect(280,60,30,30,ILI9341_CYAN);
+  tft.fillTriangle(305,75,290,65,290,85, ILI9341_BLACK);
+
+  //Month
+  tft.fillRect(5,100,310,40, ILI9341_BLACK);
+  tft.setCursor(50,105);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
+  tft.println("Month: ");
+  tft.setCursor(230,105);
+  tft.println(rtc.getMonth());
+  tft.fillRect(10,105,30,30,ILI9341_CYAN);
+  tft.fillTriangle(15,120,30,110,30,130, ILI9341_BLACK);
+  tft.fillRect(280,105,30,30,ILI9341_CYAN);
+  tft.fillTriangle(305,120,290,110,290,130, ILI9341_BLACK);
+
+  //Day
+  tft.fillRect(5,145,310,40, ILI9341_BLACK);
+  tft.setCursor(50,150);
+  tft.setTextColor(ILI9341_WHITE);  
+  tft.setTextSize(3);
+  tft.println("Day: ");
+  tft.setCursor(230,150);
+  tft.println(rtc.getDate());
+  tft.fillRect(10,150,30,30,ILI9341_CYAN);
+  tft.fillTriangle(15,165,30,155,30,175, ILI9341_BLACK);
+  tft.fillRect(280,150,30,30,ILI9341_CYAN);
+  tft.fillTriangle(305,165,290,155,290,175, ILI9341_BLACK);  
+
+  drawTime();
+}
+
 void SOS(){
   mode = 5;
-  Serial1.print("\nX\n");
+  Serial1.println("\nX\n");
   Serial1.println("SEmergency Protocol Activated!");
   tft.fillScreen(ILI9341_RED);
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
@@ -882,7 +1299,7 @@ void TypeMsg()
   isNumBoard = false;
   mode = 8;
   tft.fillScreen(ILI9341_BLACK);
-  Serial1.print("\nX\n");
+  Serial1.println("\nX\n");
   Serial1.println("SNew Message.");
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   drawBack();
@@ -896,7 +1313,7 @@ void TypeNum()
 {
   mode = 11;
   tft.fillScreen(ILI9341_BLACK);
-  Serial1.print("\nX\n");
+  Serial1.println("\nX\n");
   Serial1.println("SSet Recipient");
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   drawBack();
@@ -927,7 +1344,7 @@ void typePresetMessages()
   isNumBoard = false;
   
   tft.fillScreen(ILI9341_BLACK);
-  Serial1.print("\nX\n");
+  Serial1.println("\nX\n");
   Serial1.println("SDefine Pre-Set Messages");
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   drawBack();
@@ -939,7 +1356,7 @@ void typePresetMessages()
 
 void mainMenu(){
   mode = 0;
-  Serial1.print("X\n");
+  Serial1.println("X\n");
   Serial1.println("SMain menu.");
   tft.fillRect(0, 0, 320, 50, ILI9341_WHITE);
   tft.fillRect(0, 50, 160, 135, ILI9341_RED);
@@ -978,6 +1395,252 @@ void Zero(char * str, int len)
   }
 }
 
+void GetGpsTime()
+{
+  if((gpsHour*100*100)+(gpsMinute*100)+(gpsSecond) > lastTime || (gpsYear*100*100)+(gpsMonth*100)+(gpsDay) > lastDate)
+      {
+        if(mode == 3)
+        {
+          tft.fillRect(100,100,200,120,ILI9341_BLACK);
+          tft.setCursor(110, 100);
+          tft.print("Lat: ");
+          tft.print(lat);
+          tft.setCursor(110, 120);
+          tft.print("Long: ");
+          tft.println(lon);
+          tft.setCursor(110, 140);
+          tft.print(gpsDay);
+          tft.print("/");
+          tft.print(gpsMonth);
+          tft.print("/");
+          tft.print(gpsYear);
+          tft.setCursor(110, 160);
+          if(gpsHour < 10)
+          {
+            tft.print("0");
+          }
+          tft.print(gpsHour);
+          tft.print(":");
+          if(gpsMinute < 10)
+          {
+            tft.print("0");
+          }
+          tft.print(gpsMinute);
+          tft.print(":");
+          if(gpsSecond < 10)
+          {
+            tft.print("0");
+          }
+          tft.print(gpsSecond);
+          tft.println(" UTC");
+        }
+        int h,m,y,mn,d;
+        //calculate UTC OFFSET
+        int offset = (int)eeprom.settings.utcOffset;
+          h = gpsHour + offset;
+        if((eeprom.settings.utcOffset - offset) == 0.5)
+        {
+          m = gpsMinute + 30;
+          if(m > 59)
+          {
+            m = m - 60;
+            h = h + 1;
+          }
+        } else if((eeprom.settings.utcOffset - offset) == -0.5)
+        {
+          m = gpsMinute - 30;
+          if(m < 0)
+          {
+            m = m + 60;
+            h = h - 1;
+          }
+        } else if((eeprom.settings.utcOffset - offset) == 0.75)
+        {
+          m = gpsMinute + 45;
+          if(m > 59)
+          {
+            m = m - 60;
+            h = h + 1;
+          }
+        } else if((eeprom.settings.utcOffset - offset) == -0.75)
+        {
+          m = gpsMinute - 45;
+          if(m < 0)
+          {
+            m = m + 60;
+            h = h - 1;
+          }
+        } else
+        {
+          m = gpsMinute;
+        }
+        if(h >= 0 && h < 24)
+        {
+          y = gpsYear;
+          mn = gpsMonth;
+          d = gpsDay;
+        } else if(h < 0)  //Go back a day
+        {
+          h = h + 24;
+          if(gpsDay == 1)
+          {
+            if(gpsMonth == 1)
+            {
+              mn = 12;
+              d = 31;
+              y = gpsYear - 1;
+            } else if(gpsMonth == 5 || gpsMonth == 7 || gpsMonth == 10 || gpsMonth == 12)
+            {
+              mn = gpsMonth -1;
+              d = 30;
+            } else if(gpsMonth == 3)
+            {
+              mn = gpsMonth - 1;
+              if(((gpsYear % 4) == 0))
+              {
+                d = 29;
+              } else
+              {
+                d = 28;
+              }
+            } else
+            {
+              mn = gpsMonth - 1;
+              d = 31;
+            }
+          } else
+          {
+            d = gpsDay - 1;
+          }
+          
+        } else if(h >= 24)
+        {
+          h = h - 24;
+          if(gpsMonth == 4 || gpsMonth == 6 || gpsMonth == 9 || gpsMonth == 11)
+          {
+            if(gpsDay == 30)
+            {
+              d = 1;
+              mn = gpsMonth + 1;
+            }
+            else
+            {
+              d = gpsDay + 1;
+            }
+          } else if(gpsMonth == 2)
+          {
+            if(((gpsYear % 4) == 0))
+            {
+              if(gpsDay == 29)
+              {
+                mn = gpsMonth + 1;
+                d = 1;
+              }
+              else
+              {
+                d = gpsDay + 1;
+              }
+            } else
+            {
+              if(gpsDay == 28)
+              {
+                mn = gpsMonth + 1;
+                d = 1;
+              }
+              else
+              {
+                d = gpsDay + 1;
+              }
+            }
+          } else
+          {
+            if(gpsDay == 31)
+            {
+              if(gpsMonth == 12)
+              {
+                y = gpsYear + 1;
+                mn = 1;
+                d = 1;
+              } else
+              {
+                mn = gpsMonth + 1;
+                d = 1;
+              }
+            } else
+            {
+              d = gpsDay + 1;
+            }
+          }       
+        }
+        if(mode == 3)
+        {
+          tft.setCursor(110, 180);
+          tft.print(d);
+          tft.print("/");
+          tft.print(mn);
+          tft.print("/");
+          tft.print(y);
+          tft.setCursor(110, 200);
+          if(h < 10)
+          {
+            tft.print("0");
+          }
+          tft.print(h);
+          tft.print(":");
+          if(m < 10)
+          {
+            tft.print("0");
+          }
+          tft.print(m);
+          tft.print(":");
+          if(gpsSecond < 10)
+          {
+            tft.print("0");
+          }
+          tft.print(gpsSecond);
+          tft.print(" UTC");
+          if(offset > 0)
+          {
+            tft.print("+");
+          }
+          if(ceilf(eeprom.settings.utcOffset) == eeprom.settings.utcOffset)
+          {
+            tft.print((int)eeprom.settings.utcOffset);
+            tft.print(":");
+            tft.print("00");
+          } else if((eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == 0.5 || (eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == -0.5)
+          {
+            tft.print((int)eeprom.settings.utcOffset);
+            tft.print(":");
+            tft.print("30");
+          } else if((eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == 0.75 || (eeprom.settings.utcOffset - (int)eeprom.settings.utcOffset) == -0.75)
+          {
+            tft.print((int)eeprom.settings.utcOffset);
+            tft.print(":");
+            tft.print("45");
+          }
+        }
+        
+        if(eeprom.settings.gpsTime)
+        {
+          int oldH = rtc.getHour();
+          int oldM = rtc.getMinute();          
+          rtc.setHour(h);
+          rtc.setMinute(m);
+          rtc.setSecond(gpsSecond);
+          rtc.setDate(d);
+          rtc.setMonth(mn);
+          rtc.setYear(y-2000);
+          if(oldH != h || oldM != m)
+          {
+            drawTime();
+          }
+        }
+        lastTime = (gpsHour*100*100)+(gpsMinute*100)+(gpsSecond);
+        lastDate = (gpsYear*100*100)+(gpsMonth*100)+(gpsDay);
+      }
+}
+
 
 void SetupEeprom()
 {
@@ -985,9 +1648,12 @@ void SetupEeprom()
   strcpy(eeprom.settings.predefinedMessages[1], "Setting up camp.");
   strcpy(eeprom.settings.predefinedMessages[2], "Going for a hike.");
   strcpy(eeprom.settings.predefinedMessages[3], "Injured, need help.");
-  eeprom.settings.breadInterval = 10;
+  eeprom.settings.breadInterval = 1;
+  eeprom.settings.currentInterval = 1;
   eeprom.settings.militaryTime = false;
   strcpy(eeprom.settings.recipient, "+61432123456");
+  eeprom.settings.utcOffset = 8;
+  eeprom.settings.gpsTime = false;
 
   strcpy(eeprom.outbox.recipient,"+61400000000");
   eeprom.outbox.coords.dateTime.year = 10 ;
@@ -1044,10 +1710,22 @@ void SendMessage(int opt)
   Serial.print("/");
   Serial.print(rtc.date());
   Serial.print("|");
+  if(rtc.hour() < 10)
+  {
+    Serial.print("0");
+  }
   Serial.print(rtc.hour());
   Serial.print(":");
+  if(rtc.minute() < 10)
+  {
+    Serial.print("0");
+  }
   Serial.print(rtc.minute());
   Serial.print(":");
+  if(rtc.second() < 10)
+  {
+    Serial.print("0");
+  }
   Serial.print(rtc.second());
   Serial.print("|");
   Serial.print(lat);
@@ -1140,10 +1818,22 @@ void SendMessage(char * str)
   Serial.print("/");
   Serial.print(rtc.date());
   Serial.print("|");
+  if(rtc.hour() < 10)
+  {
+    Serial.print("0");
+  }
   Serial.print(rtc.hour());
   Serial.print(":");
+  if(rtc.minute() < 10)
+  {
+    Serial.print("0");
+  }
   Serial.print(rtc.minute());
   Serial.print(":");
+  if(rtc.second() < 10)
+  {
+    Serial.print("0");
+  }
   Serial.print(rtc.second());
   Serial.print("|");
   Serial.print(lat);
@@ -1151,7 +1841,7 @@ void SendMessage(char * str)
   Serial.print(lon);
   Serial.print("|");
   Serial.print(str);
-  
+
   strcpy(eeprom.outbox.recipient,eeprom.settings.recipient);
   eeprom.outbox.coords.dateTime.year = rtc.year();
   eeprom.outbox.coords.dateTime.month = rtc.month();
@@ -1172,6 +1862,42 @@ void SendMessage(char * str)
   delay(1000);
   tft.fillRect(52, 0, 92, 50, ILI9341_WHITE);
   EEPROM.put(0,eeprom);
+}
+
+void SendBread()
+{
+  Serial.print(eeprom.settings.recipient);
+  Serial.print("|");
+  Serial.print(rtc.year());
+  Serial.print("/");
+  Serial.print(rtc.month());
+  Serial.print("/");
+  Serial.print(rtc.date());
+  Serial.print("|");
+  if(rtc.hour() < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.print(rtc.hour());
+  Serial.print(":");
+  if(rtc.minute() < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.print(rtc.minute());
+  Serial.print(":");
+  if(rtc.second() < 10)
+  {
+    Serial.print("0");
+  }
+  Serial.print(rtc.second());
+  Serial.print("|");
+  Serial.print(lat);
+  Serial.print(",");
+  Serial.print(lon);
+  Serial.print("|");
+  Serial.println("Current Location");
+  
 }
 
 void drawBack()
