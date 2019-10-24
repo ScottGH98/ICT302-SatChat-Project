@@ -2310,7 +2310,7 @@ void SetupEeprom()
   eeprom.settings.militaryTime = false;
   strcpy(eeprom.settings.recipient, "+61432123456");
   eeprom.settings.utcOffset = 8;
-  eeprom.settings.currentOffset = 28;
+  eeprom.settings.currentOffset = 27;
   eeprom.settings.gpsTime = false;
   eeprom.settings.narrator = true;
 
