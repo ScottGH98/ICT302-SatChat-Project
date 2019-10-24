@@ -148,7 +148,6 @@ void setup(void) {
   rtc.setAlarm1(0);
   rtc.enableAlarmInterrupt();
   rtc.setAlarm2(rtc.minute() + 1);
-  //rtc.setTime(0, 40, 2, 5, 26, 9, 19);
   
 
   
@@ -175,6 +174,7 @@ void loop()
   int blackState = digitalRead(2);
   int redState = digitalRead(3);
 
+  //Calls SOS function if red button is pressed
   if(redState == LOW)
   {
     if(sosing == false)
@@ -189,6 +189,7 @@ void loop()
     }
   }
 
+  //Calls sleep function if black button is pressed
   if(blackState == LOW)
   {
     if(sleeping == false)
@@ -202,6 +203,7 @@ void loop()
       mainMenu();
     }
   }
+
   while(Serial2.available()){ // check for gps data 
     if(gps.encode(Serial2.read()))// encode gps data 
     {  
@@ -211,12 +213,14 @@ void loop()
     }
   }
 
+  //Gets Input from serial used to emulate receiving message
   while(Serial.available())
   {
     String in = Serial.readString();
     ReceiveMessage(in);
   }
-  
+
+  //Gets Time from GPS
   GetGpsTime();
  
   if(mode == 0) //Main Menu
@@ -1132,6 +1136,7 @@ void textWrap3(char * msg)
   }
 }
 
+//Draws preset messages screen
 void presetMessages(){
   mode = 1;
   if(eeprom.settings.narrator)
@@ -1159,6 +1164,7 @@ void presetMessages(){
   textWrap3(eeprom.settings.predefinedMessages[3]);
 }
 
+//draws custom messages screen
 void customMessages(){
   mode = 2;
   EEPROM.get(0,eeprom);
@@ -1194,6 +1200,7 @@ void customMessages(){
   tft.print("Inbox");
 }
 
+//draws inbox screen
 void Inbox()
 {
   mode = 16;
@@ -1339,6 +1346,7 @@ void Inbox()
   textWrap(eeprom.inbox[3].content,26,2);
 }
 
+//draws outbox screen
 void Outbox()
 {
   mode = 15;
@@ -1500,6 +1508,7 @@ void Outbox()
   textWrap(eeprom.outbox[3].content,26,2);
 }
 
+//draws coordinates screen
 void coordinates(){
   mode = 3;
   if(eeprom.settings.narrator)
@@ -1518,6 +1527,7 @@ void coordinates(){
   tft.print("No GPS Signal");
 }
 
+//draws settings screen
 void settings(){
   mode = 4;
   if(eeprom.settings.narrator)
@@ -1572,6 +1582,7 @@ void settings(){
   EEPROM.put(0,eeprom);
 }
 
+//draws general settings screen
 void generalSettings()
 {
   mode = 19;
@@ -1608,6 +1619,7 @@ void generalSettings()
   EEPROM.put(0,eeprom);
 }
 
+//draws factory reset confirmation screen
 void FactoryReset()
 {
   mode = 20;
@@ -1647,6 +1659,7 @@ void FactoryReset()
   drawTime();  
 }
 
+//draws message settings screen
 void messageSettings(){
   mode = 18;
   if(eeprom.settings.narrator)
@@ -1756,6 +1769,7 @@ void clockSettings()
   EEPROM.put(0,eeprom);
 }
 
+//draws time settings screen
 void timeSettings()
 {
   mode = 13;
@@ -1839,6 +1853,7 @@ void timeSettings()
   drawTime();
 }
 
+//draws date settings screen
 void dateSettings()
 {
   mode = 14;
@@ -1893,6 +1908,7 @@ void dateSettings()
   drawTime();
 }
 
+//draws SOS screen
 void SOS(){
   mode = 5;
   Serial1.println("\nX\n");
@@ -1907,12 +1923,14 @@ void SOS(){
   tft.print("SOS");
 }
 
+//Sets screen to black
 void Sleep()
 {
   mode = 7;
   tft.fillScreen(ILI9341_BLACK);
 }
 
+//draws screen to type messages on
 void TypeMsg()
 {
   isLower = true;
@@ -1932,6 +1950,7 @@ void TypeMsg()
   tft.drawBitmap(0,0,keyboardlower,320,240,ILI9341_WHITE);
 }
 
+//draws screen to enter mobile number
 void TypeNum()
 {
   mode = 11;
@@ -1957,12 +1976,14 @@ void TypeNum()
   tft.drawBitmap(0,0,numkey,320,240,ILI9341_WHITE);
 }
 
+//draws screen to select which preset message to define
 void setPresetMessages()
 {
   presetMessages();
   mode = 9;
 }
 
+//draws screen to type preset message
 void typePresetMessages()
 {
   mode = 10;
@@ -1983,6 +2004,7 @@ void typePresetMessages()
   tft.drawBitmap(0,0,keyboardlower,320,240,ILI9341_WHITE);
 }
 
+//Draws main menu screen
 void mainMenu(){
   mode = 0;
   if(eeprom.settings.narrator)
@@ -2019,6 +2041,7 @@ void mainMenu(){
   drawTime();
 }
 
+//erases c string
 void Zero(char * str, int len)
 {
   for(int i = len-1; i >= 0; i--)
@@ -2027,6 +2050,8 @@ void Zero(char * str, int len)
   }
 }
 
+//Gets GPS data and displays it if the coordinates menu is selected
+//Updates rtc if gps time is enabled
 void GetGpsTime()
 {
   if((gpsHour*100*100)+(gpsMinute*100)+(gpsSecond) > lastTime || (gpsYear*100*100)+(gpsMonth*100)+(gpsDay) > lastDate)
@@ -2273,7 +2298,7 @@ void GetGpsTime()
       }
 }
 
-
+//Writes defaults to eeprom
 void SetupEeprom()
 {
   strcpy(eeprom.settings.predefinedMessages[0], "All is going well.");
@@ -2285,7 +2310,7 @@ void SetupEeprom()
   eeprom.settings.militaryTime = false;
   strcpy(eeprom.settings.recipient, "+61432123456");
   eeprom.settings.utcOffset = 8;
-  eeprom.settings.currentOffset = 28;
+  eeprom.settings.currentOffset = 27;
   eeprom.settings.gpsTime = false;
   eeprom.settings.narrator = true;
 
@@ -2317,7 +2342,7 @@ void SetupEeprom()
 }
 
 
-
+//draws compass bearing to screen
 void drawBearing(){
   sensors_event_t event; 
   mag.getEvent(&event);
@@ -2336,6 +2361,7 @@ void drawBearing(){
   tft.print(heading);
 }
 
+//Handles recieved messages and saves them to eeprom
 void ReceiveMessage(String txt)
 {
   EEPROM.get(0,eeprom);
@@ -2371,6 +2397,9 @@ void ReceiveMessage(String txt)
   EEPROM.put(0,eeprom);
 }
 
+//sends preset message based on integer code
+//1-4 are the preset messages
+//5 is the SOS message
 void SendMessage(int opt)
 {
   Serial.print(eeprom.settings.recipient);
@@ -2552,6 +2581,8 @@ void SendMessage(int opt)
   tft.fillRect(52, 0, 92, 50, ILI9341_WHITE);
   EEPROM.put(0,eeprom);
 }
+
+//Sends custom message taking string of message as input
 void SendMessage(char * str)
 {
   Serial.print(eeprom.settings.recipient);
@@ -2649,6 +2680,8 @@ void SendMessage(char * str)
   EEPROM.put(0,eeprom);
 }
 
+//Sends breadcrumb of current location
+//This message is not saved to the eeprom
 void SendBread()
 {
   Serial.print(eeprom.settings.recipient);
@@ -2713,6 +2746,8 @@ void SendBread()
   
 }
 
+//Pushes messages in outbox down one deleting the oldest message
+//to be called before writing new message to outbox
 void pushOutbox()
 {
   EEPROM.get(0,eeprom);
@@ -2740,6 +2775,8 @@ void pushOutbox()
   EEPROM.put(0,eeprom);
 }
 
+//Pushes messages in inbox down one deleting the oldest message
+//to be called before writing new message to inbox
 void pushInbox()
 {
   EEPROM.get(0,eeprom);
@@ -2767,6 +2804,7 @@ void pushInbox()
   EEPROM.put(0,eeprom);
 }
 
+//Draws a "back button" on the screen for navigation
 void drawBack()
 {
   tft.fillRect(0, 0, 50, 50, ILI9341_BLACK);
@@ -2780,8 +2818,7 @@ void drawBack()
   tft.print("-");
 }
 
-//the program forks here
-
+//draws a clock on the screen
 void drawTime() {
   rtc.update();
   tft.fillRect(150, 0, 320, 50, ILI9341_WHITE);
@@ -2855,6 +2892,8 @@ void drawTime() {
     tft.print(rtc.minute());
   }  
 }
+
+//used for input of number keyboard
 int DrawNumkey(char * str)
 {
   int count = strlen(str);
@@ -2936,6 +2975,7 @@ int DrawNumkey(char * str)
   return count;
 }
 
+//used for input of keyboard
 int DrawKeyboard(char * str)
 {
   int count = strlen(str);
