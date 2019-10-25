@@ -103,7 +103,6 @@ bool isLower = true;
 char str[200];
 char strNum[15];
 int preNum = 0;
-int incomingByte;
 int lastTime = 0;
 int lastDate = 0;
 int breadCount = 1000;
@@ -122,13 +121,7 @@ void setup(void) {
   Serial2.begin(9600,SERIAL_8N1); //GPS
   Serial3.begin(9600); //EMIC serial
 
-  Serial3.print("\nX\nS"); //End command (just in case),Stop speaking, prepare to speak. Do not end command until message has been sent;
-  Serial3.println("Powered up."); //"SPowered up\n" is the entire command and terminates by itself. "S\nPowered up" will not work. 
-
-  //set up the emic
-  //Serial3.println("N0"); //set voice; N0 to N8
-  //Serial3.println("V18"); //set volume; V-48 to V18
-  //Serial3.println("W75"); //set words per minute. W75 to W600
+  Serial3.print("\nX\nS");
 
   //turn on screen
   tft.begin();
@@ -148,9 +141,6 @@ void setup(void) {
   rtc.setAlarm1(0);
   rtc.enableAlarmInterrupt();
   rtc.setAlarm2(rtc.minute() + 1);
-  
-
-  
 
   EEPROM.get(0,eeprom);
   factorySettings = EEPROM.read(0); //the MEGA default for EEPROM is 255; if we have set up the device before it will not be 255
@@ -348,6 +338,9 @@ void loop()
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] < 50 && touchPoint[1] < 50){
         Outbox();
+      } else if(touchPoint[0] > 50 && touchPoint[1] < 50 && touchPoint[0] < 140)
+      {
+        TypeMsg();
       }
     }
     
@@ -901,6 +894,9 @@ void loop()
     if(p.z > MINPRESSURE && p.z < MAXPRESSURE){
       if(touchPoint[0] < 50 && touchPoint[1] < 50){
         Inbox();
+      } else if(touchPoint[0] > 50 && touchPoint[1] < 50 && touchPoint[0] < 140)
+      {
+        TypeMsg();
       }
     }  
   } else if(mode == 18) //Message Settings
